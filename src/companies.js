@@ -37,7 +37,7 @@ export function renderCompanies(container, companies) {
 			details.style.display = isOpen ? "none" : "block";
 		});
 
-		card.append(name, industry, img, scoreBtn)
+		card.append(name, industry, img, scoreBtn, details)
 		container.appendChild(card);
 	});
 }
