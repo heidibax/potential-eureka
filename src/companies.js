@@ -6,10 +6,10 @@ export function renderCompanies(container, companies) {
 		card.className = "company-card";
 	
 		const name = document.createElement("h2");
-		name.textContent = company.name;
+		name.textContent = company.ticker;
 
-		const industry = document.createElement("p");
-		industry.textContent = company.industry;
+		const earningsDate = document.createElement("p");
+		earningsDate.textContent = company.earnings_date;
 		
 		const img = document.createElement("img");
 		img.src = company.img;
@@ -37,7 +37,7 @@ export function renderCompanies(container, companies) {
 			details.style.display = isOpen ? "none" : "block";
 		});
 
-		card.append(name, industry, img, scoreBtn, details)
+		card.append(name, earningsDate, img, scoreBtn, details)
 		container.appendChild(card);
 	});
 }

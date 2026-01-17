@@ -27,7 +27,7 @@ export function getCompanies() {
 		{	
 			id: 1, 
 			name: "Facebook", 
-			industry : "Techno", 
+			earnings_date : "Jan 10", 
 			img: "img/Facebook.jpg",
 			score: "50",
 			breakdown: {
@@ -40,7 +40,7 @@ export function getCompanies() {
 		},
 		{ 	id: 2, 
 			name: "ESSO", 
-			industry : "Energy", 
+			earnings_date : "Feb 5", 
 			img: "img/ESSO.jpg",
 			score: "30",
 			breakdown: {
