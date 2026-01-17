@@ -16,17 +16,21 @@
 
     <div id="draftBoard" class="container" >
         <h2> Budget: $<span id="budget">100</span></h2>
+        <div id="budgetBarContainer">
+            <div id="budgetBar"></div>
+        </div>
         
         <h3> Available Companies: </h3>
-        <div class="company-grid" id="companyList">
+        <div class="company-grid" id="companyList"></div>
 
-        <h3> Your Roster</h3>
-        <ul id="leaderboard"></ul>
+        <h3> Your Roster:</h3>
+        <ul id="roster"></ul>
         
         <button id="simulate">Simulate Earnings</button>
 
-        <h3>Leaderboard</h3>
+        <h3>Leaderboard:</h3>
         <ul id="leaderboard"></ul>
+        <div id="toast" class="hidden"></div>
     </div>
     <script src="app.js"></script>
 
