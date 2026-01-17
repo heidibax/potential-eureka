@@ -1,0 +1,51 @@
+
+body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+        background: #529d55;
+    }
+
+.container {
+    text-align: center;
+    background: #93bc96;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(82, 77, 77, 0.1);
+    max-width: 600px;
+    width: 100%;
+}
+
+.homepage-img {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    border-radius: 12px;
+    display: block;
+    margin: 0 auto 16px;
+}
+
+.company-grid{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.company-card {
+    border: 1px solid #cccccc;
+    padding: 12px;
+    border-radius: 8px;
+    background: #9f82f0;    
+}
+
+.company-card button {
+    margin-top: 8px;
+    width: 100%;
+}
+
+.hidden {
+    display: none;
+}
+
+
