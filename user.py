@@ -16,6 +16,8 @@ class User:
 
         self.inbox = []
 
+    # USER
+
     def create_user(self, user_id, username, email, initial_balance):
         return User(user_id, username, email, initial_balance)
     
@@ -35,8 +37,38 @@ class User:
             "following": list(self.following),
             "inbox": self.inbox
         }
+    
+    # BALANCE MANAGEMENT
+    
     def update_balance(self, amount):
         self.balance += amount
+
+    def can_afford(self, price_per_share, shares):
+        total_cost = price_per_share * shares
+        return total_cost <= self.balance
+    
+    # SOCIAL 
+    
+    def follow(self, user_to_follow):
+        self.following.add(user_to_follow.user_id)
+        user_to_follow.followers.add(self.user_id)
+
+    def unfollow(self, user_to_unfollow):
+        self.following.discard(user_to_unfollow.user_id)
+        user_to_unfollow.followers.discard(self.user_id)
+
+    def send_message(self, recipient, message):
+        timestamp = datetime.now()
+        recipient.inbox.append({
+            "from": self.user_id,
+            "message": message,
+            "timestamp": timestamp
+        })
+    
+    def receive_messages(self):
+        return self.inbox
+
+
 
 class Portfolio:
     def __init__(self):
@@ -58,28 +90,4 @@ class Portfolio:
     
     def get_holdings(self):
         return self.holdings
-
-    def can_afford(self, price_per_share, shares):
-        total_cost = price_per_share * shares
-        return total_cost <= self.balance
-
-class SocialFeatures:
-    def follow(self, user_to_follow):
-        self.following.add(user_to_follow.user_id)
-        user_to_follow.followers.add(self.user_id)
-
-    def unfollow(self, user_to_unfollow):
-        self.following.discard(user_to_unfollow.user_id)
-        user_to_unfollow.followers.discard(self.user_id)
-
-    def send_message(self, recipient, message):
-        timestamp = datetime.now()
-        recipient.inbox.append({
-            "from": self.user_id,
-            "message": message,
-            "timestamp": timestamp
-        })
-    
-    def receive_messages(self):
-        return self.inbox
 
