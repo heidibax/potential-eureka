@@ -1,0 +1,157 @@
+
+body {
+        font-family:'Inter', system-ui, sans-serif;
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+        background: #F7FAFC;
+    }
+
+.container {
+    text-align: center;
+    background:  #E6FFFA;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(82, 77, 77, 0.1);
+    max-width: 600px;
+    width: 100%;
+}
+
+.homepage-img {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    border-radius: 12px;
+    display: block;
+    margin: 0 auto 16px;
+}
+
+.company-grid{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.company-card button {
+    margin-top: 8px;
+    width: 100%;
+    background: #FFFFFF;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.company-ticker {
+    font-size: 0.75rem;
+    font-weight: bold;
+    background: #2F855A;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    width: fit-content;
+    text-transform: uppercase;
+}
+
+.company-name {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #1F2937;
+    font-weight: 700;
+}
+
+.company-industry {
+    margin: 0;
+    font-size: 0.85rem;
+    color:  #6B7280;
+}
+
+.company-price {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #4caf50;
+}
+
+.draft-btn {
+    background: #4caf50;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.draft-btn:hover {
+    background: #45a049;
+}
+
+.draft-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.company-card:hover {
+    transform: translateY(-3px);
+    background: #e0f7fa;
+}
+.company-card.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.company-img {
+    width: 100%;
+    max-width: 150px;
+    height: auto;
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+
+.company-score {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #4caf50;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: rgba(76, 175, 80, 0.1);
+    position: relative;
+}
+
+.company-score:hover {
+    background: rgba(76, 175, 80, 0.2);
+}
+
+.hidden {
+    display: none;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #4caf50;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border: none;
+}
+
+.btn:hover {
+    background-color: #45a049;
+}
+
+.title {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #1F2937;              /* dark text */
+    -webkit-text-stroke: 1.5px white;  /* white outline */
+    text-shadow: 
+        0 2px 4px rgba(0,0,0,0.25);     /* soft shadow */
+}
+
+
+
+

@@ -4,35 +4,158 @@
 <head>
     <title>Fantasy Stock Market League</title>
     <link rel="stylesheet" href="../style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        .header {
+            background: #2F855A;
+            color: white;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            margin: 0 0 16px 0;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background: white;
+            color: #2F855A;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .nav-btn:hover {
+            background: #E6FFFA;
+        }
+
+        .nav-btn.active {
+            background: #4caf50;
+            color: white;
+        }
+
+        .leaderboard-section {
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .leaderboard-section h2 {
+            color: #1F2937;
+            margin-top: 0;
+        }
+
+        .leaderboard-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .leaderboard-item {
+            padding: 12px;
+            background: #E6FFFA;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            color: #1F2937;
+        }
+
+        .leaderboard-rank {
+            font-weight: bold;
+            color: #2F855A;
+            min-width: 30px;
+        }
+    </style>
+
 </head>
 
 <body> 
-    <div id="homepage" class="container">
-        <img src="https://wallpapers.com/images/hd/bullish_-stock_-market_-graph_3-d-zvysagkvqi9j6msd.png" alt="Fantasy Earnings" class="homepage-img">
-        <h1> Fantasy Stock Market League  </h1>
-        <p> Draft companies like fantasy football and earn points based on their stock performance. Play with friends.</p>
-        <button id="startButton">Start Draft</button>
-    </div>
-
-    <div id="draftBoard" class="container" >
-        <h2> Budget: $<span id="budget">100</span></h2>
-        <div id="budgetBarContainer">
-            <div id="budgetBar"></div>
+    <div class="container">
+        <div class="header">
+            <h1>Fantasy Stock Market League</h1>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-btn active">Home</a>
+                <a href="../search.html" class="nav-btn">Companies</a>
+                <a href="../my-draft.html" class="nav-btn">My Draft</a>
+                <a href="../friends.html" class="nav-btn">Friends</a>
+            </div>
         </div>
-        
-        <h3> Available Companies: </h3>
-        <div class="company-grid" id="companyList"></div>
 
-        <h3> Your Roster:</h3>
-        <ul id="roster"></ul>
-        
-        <button id="simulate">Simulate Earnings</button>
+        <div id="homepage">
+            <img src="https://wallpapers.com/images/hd/bullish_-stock_-market_-graph_3-d-zvysagkvqi9j6msd.png" alt="Fantasy Earnings" class="homepage-img">
+            <h1 class="title">Fantasy Stock Market League</h1>
+            <p>Draft companies like fantasy football and earn points based on their stock performance. Play with friends.</p>
+            <a id="startButton" href="../search.html" class="btn">Start Draft</a>
 
-        <h3>Leaderboard:</h3>
-        <ul id="leaderboard"></ul>
-        <div id="toast" class="hidden"></div>
+            <div class="leaderboard-section">
+                <h2>Leaderboard</h2>
+                <ul class="leaderboard-list" id="leaderboardList"></ul>
+            </div>
+        </div>
+
+        <div id="draftBoard" class="hidden">
+            <h2>Budget: $<span id="budget">100</span></h2>
+            <div id="budgetBarContainer">
+                <div id="budgetBar"></div>
+            </div>
+            
+            <h3>Available Companies:</h3>
+            <div class="company-grid" id="companyList"></div>
+
+            <h3>Your Roster:</h3>
+            <ul id="roster"></ul>
+            
+            <button id="simulate">Simulate Earnings</button>
+
+            <h3>Leaderboard:</h3>
+            <ul id="leaderboard"></ul>
+            <div id="toast" class="hidden"></div>
+        </div>
     </div>
     <script src="app.js"></script>
+    <script>
+        // Load leaderboard on homepage
+        function loadLeaderboard() {
+            fetch("/api/leaderboard")
+                .then(response => response.json())
+                .then(data => {
+                    const leaderboardList = document.getElementById("leaderboardList");
+                    leaderboardList.innerHTML = "";
+
+                    data.forEach((entry, index) => {
+                        const li = document.createElement("li");
+                        li.className = "leaderboard-item";
+                        li.innerHTML = `
+                            <span class="leaderboard-rank">#${index + 1}</span>
+                            <span>${entry.player_name}</span>
+                            <span><strong>${entry.score} pts</strong></span>
+                        `;
+                        leaderboardList.appendChild(li);
+                    });
+                })
+                .catch(error => console.error("Error loading leaderboard:", error));
+        }
+
+        loadLeaderboard();
+    </script>
 
 </body> 
 </html>
