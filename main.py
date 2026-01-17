@@ -281,6 +281,7 @@ for ticker in COMPANIES:
 
         results.append(
             {
+                "stock name": yt.info.get("shortName", "N/A"),
                 "ticker": ticker,
                 "earnings_date": earnings_date,
                 "eps_estimate": float(est_eps),

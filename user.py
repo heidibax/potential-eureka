@@ -1,4 +1,5 @@
 from datetime import datetime
+import main
 
 class User:
     def __init__(self, user_id, username, email, initial_balance):
@@ -41,11 +42,7 @@ class User:
     # BALANCE MANAGEMENT
     
     def update_balance(self, amount):
-        self.balance += amount
-
-    def can_afford(self, price_per_share, shares):
-        total_cost = price_per_share * shares
-        return total_cost <= self.balance
+        self.balance += float(amount)
     
     # SOCIAL 
     
@@ -73,6 +70,18 @@ class User:
 class Portfolio:
     def __init__(self):
         self.holdings = {}  # key: ticker, value: number of shares
+
+    def can_afford(self, ticker, shares):
+        if ticker in main.premium_picks:
+            price_per_share=15.0
+        elif ticker in main.mid_tier:
+            price_per_share=10.0
+        elif ticker in main.wildcards:
+            price_per_share=5.0
+        else: price_per_share = 3.0
+
+        total_cost = price_per_share * shares
+        return total_cost <= self.balance
 
     def add_stock(self, ticker, shares):
         if ticker in self.holdings:
