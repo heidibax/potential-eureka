@@ -24,10 +24,12 @@ export function getCompanies() {
 
 export function getCompanies() {
 	return [
-		{	id: 1, 
+		{	
+			id: 1, 
 			name: "Facebook", 
 			industry : "Techno", 
 			img: "img/Facebook.jpg",
+			score: "50",
 			breakdown: {
 				eps: "1",
 				revenue: "2",
@@ -36,7 +38,19 @@ export function getCompanies() {
 				tags: "5",				
 			}
 		},
-//		{ id: 2, name: "ESSO", industry : "Energy", img: "img/ESSO.jpg" }
+		{ 	id: 2, 
+			name: "ESSO", 
+			industry : "Energy", 
+			img: "img/ESSO.jpg",
+			score: "30",
+			breakdown: {
+				eps: "1",
+				revenue: "2",
+				guidance_score: "3",
+				bonus_score: "4",
+				tags: "5",
+			}
+		 }
 	];
 }
 
