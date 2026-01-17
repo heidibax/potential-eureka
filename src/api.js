@@ -24,8 +24,8 @@ export function getCompanies() {
 
 export function getCompanies() {
 	return [
-		{ id: 1, name: "Facebook", industry : "Techno" },
-		{ id: 2, name: "ESSO", industry : "Energy" }
+		{ id: 1, name: "Facebook", industry : "Techno", img: "img/Facebook.jpg" },
+		{ id: 2, name: "ESSO", industry : "Energy", img: "img/ESSO.jpg" }
 	];
 }
 

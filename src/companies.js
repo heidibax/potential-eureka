@@ -10,8 +10,15 @@ export function renderCompanies(container, companies) {
 
 		const industry = document.createElement("p");
 		industry.textContent = company.industry;
-
-		card.append(name, industry)
+		
+		const img = document.createElement("img");
+		img.src = company.img;
+		img.width = 200;
+		
+		card.append(name, industry, img)
+		
+	
+		
 		container.appendChild(card);
 	});
 }
