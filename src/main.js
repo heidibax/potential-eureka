@@ -1,7 +1,7 @@
 import { getCompanies } from "./api.js";
 import { renderCompanies } from "./companies.js";
 
-document.addEventListener("DOMContentLoaded, async () => {
+document.addEventListener("DOMContentLoaded", async () => {
 	const container = document.getElementById("companies");
 	
 	try {
