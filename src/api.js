@@ -16,9 +16,17 @@ async function request(endpoint, options = {}) {
 
 	return response.json();
 }
-
+/*
 export function getCompanies() {
 	return request("/companies");
+}
+*/
+
+export function getCompanies() {
+	return [
+		{ id: 1, name: "Facebook", industry : "Techno" },
+		{ id: 2, name: "ESSO", industry : "Energy" }
+	];
 }
 
 export function getCompanyByID(id) {
