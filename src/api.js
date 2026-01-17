@@ -26,31 +26,21 @@ export function getCompanies() {
 	return [
 		{	
 			id: 1, 
-			name: "Facebook", 
+			name: "Facebook Inc",
+			ticker: "FB", 
 			earnings_date : "Jan 10", 
-			img: "img/Facebook.jpg",
+			img: "img/facebook.png",
 			score: "50",
 			breakdown: {
-				eps: "1",
-				revenue: "2",
-				guidance_score: "3",
-				bonus_score: "4",
-				tags: "5",				
+				eps_estimate: "1",
+				eps_actual: "2",
+				eps_result: "3",
+				surprise_pct: "4",
+				bonus_flags: "5",
+				daily_pct_change: "6",
+				monthly_price_change: "7",				
 			}
 		},
-		{ 	id: 2, 
-			name: "ESSO", 
-			earnings_date : "Feb 5", 
-			img: "img/ESSO.jpg",
-			score: "30",
-			breakdown: {
-				eps: "1",
-				revenue: "2",
-				guidance_score: "3",
-				bonus_score: "4",
-				tags: "5",
-			}
-		 }
 	];
 }
 

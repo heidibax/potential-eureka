@@ -5,15 +5,16 @@ export function renderCompanies(container, companies) {
 		const card = document.createElement("div");
 		card.className = "company-card";
 	
-		const name = document.createElement("h2");
-		name.textContent = company.ticker;
+		//const name = document.createElement("h2");
+		//name.textContent = company.ticker;
 
 		const earningsDate = document.createElement("p");
-		earningsDate.textContent = company.earnings_date;
+		//earningsDate.textContent = company.earnings_date;
 		
 		const img = document.createElement("img");
 		img.src = company.img;
 		img.width = 200;
+		img.className = "company-img";
 		
 		//make drop-down
 		const scoreBtn = document.createElement("button");

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Company Details</title>
+    <link rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .detail-header img {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            border: 3px solid #4caf50;
+            object-fit: cover;
+        }
+
+        .detail-header-info h2 {
+            margin: 0 0 4px 0;
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .detail-header-info p {
+            margin: 0;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .detail-section {
+            margin-bottom: 24px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .detail-section h3 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            color: #4caf50;
+        }
+
+        .detail-section p {
+            margin: 8px 0;
+            color: white;
+        }
+
+        .score-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #4caf50;
+            text-align: center;
+            padding: 20px;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 16px;
+            padding: 10px 20px;
+            background: #4caf50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .back-button:hover {
+            background: #45a049;
+        }
+
+        .breakdown-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .breakdown-item {
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .breakdown-item-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 4px;
+        }
+
+        .breakdown-item-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4caf50;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            justify-content: center;
+        }
+
+        .add-draft-btn {
+            padding: 12px 24px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .add-draft-btn:hover {
+            background: #45a049;
+        }
+
+        .add-draft-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .success-message {
+            display: none;
+            padding: 12px;
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4caf50;
+            border-radius: 6px;
+            color: #4caf50;
+            text-align: center;
+            font-weight: bold;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="search.html" class="back-button">← Back to Search</a>
+
+        <div class="detail-header" id="detailHeader"></div>
+
+        <div class="score-display" id="scoreDisplay"></div>
+
+        <div class="action-buttons">
+            <button id="addDraftBtn" class="add-draft-btn">Add to Draft</button>
+        </div>
+        <div class="success-message" id="successMessage">✓ Added to draft!</div>
+
+        <div class="detail-section">
+            <h3>Score Breakdown</h3>
+            <div class="breakdown-grid" id="breakdownGrid"></div>
+        </div>
+
+        <div class="detail-section" id="tagsSection" style="display: none;">
+            <h3>Tags</h3>
+            <p id="tagsText"></p>
+        </div>
+
+        <div class="detail-section">
+            <h3>Key Metrics</h3>
+            <p><strong>Revenue:</strong> <span id="revenue"></span></p>
+            <p><strong>EPS:</strong> <span id="eps"></span></p>
+            <p><strong>Industry:</strong> <span id="industry"></span></p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getCompanies } from "./src/api.js";
+
+        // Get company ID from URL
+        const params = new URLSearchParams(window.location.search);
+        const companyId = params.get("id");
+
+        async function loadCompanyDetail() {
+            const companies = await getCompanies();
+            const company = companies.find(c => c.id == companyId);
+
+            if (!company) {
+                document.getElementById("detailHeader").innerHTML = "<p>Company not found</p>";
+                return;
+            }
+
+            // Set page title
+            document.title = `${company.name} - Details`;
+
+            // Header
+            document.getElementById("detailHeader").innerHTML = `
+                <img src="${company.img}" alt="${company.name}">
+                <div class="detail-header-info">
+                    <h2>${company.name}</h2>
+                    <p>${company.ticker}</p>
+                </div>
+            `;
+
+            // Score
+            document.getElementById("scoreDisplay").textContent = company.score;
+
+            // Breakdown
+            document.getElementById("breakdownGrid").innerHTML = `
+                <div class="breakdown-item">
+                    <div class="breakdown-item-label">EPS Estimate</div>
+                    <div class="breakdown-item-value">${company.breakdown.eps_estimate}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-item-label">EPS Actual</div>
+                    <div class="breakdown-item-value">${company.breakdown.eps_actual}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-item-label">EPS Result</div>
+                    <div class="breakdown-item-value">${company.breakdown.eps_result}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-item-label">Surprise %</div>
+                    <div class="breakdown-item-value">${company.breakdown.surprise_pct}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-item-label">Bonus Flags</div>
+                    <div class="breakdown-item-value">${company.breakdown.bonus_flags}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-item-label">Daily % Change</div>
+                    <div class="breakdown-item-value">${company.breakdown.daily_pct_change}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-item-label">Monthly Price Change</div>
+                    <div class="breakdown-item-value">${company.breakdown.monthly_price_change}</div>
+                </div>
+            `;
+
+            // Tags
+            if (company.breakdown.tags) {
+                document.getElementById("tagsSection").style.display = "block";
+                document.getElementById("tagsText").textContent = company.breakdown.tags;
+            }
+
+            // Key metrics
+            //document.getElementById("revenue").textContent = company.breakdown.revenue;
+            //document.getElementById("eps").textContent = company.breakdown.eps;
+            //document.getElementById("industry").textContent = company.industry;
+
+            // Add to Draft button handler
+            document.getElementById("addDraftBtn").addEventListener("click", () => {
+                addToDraft(company);
+            });
+        }
+
+        function addToDraft(company) {
+            // Send to backend
+            fetch("/api/draft", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ id: company.id })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to add to draft");
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Show success message
+                const successMsg = document.getElementById("successMessage");
+                successMsg.style.display = "block";
+                
+                // Hide after 2 seconds
+                setTimeout(() => {
+                    successMsg.style.display = "none";
+                }, 2000);
+
+                // Disable button
+                document.getElementById("addDraftBtn").disabled = true;
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Failed to add to draft. Please try again.");
+            });
+        }
+
+        // Load on page load
+        loadCompanyDetail();
+    </script>
+</html>
+</html>
+</body>
+</html>
