@@ -80,6 +80,20 @@ POINTS = {
         "bonus": {
             "surprise_superstar": 20,
             "comeback_kid": 15,
+        },
+        "daily_change": {
+            "big_increase": 10,
+            "small_increase": 5,
+            "big_decrease": -15,
+            "small_decrease": -8,
+            "no_change": 0  
+        },
+        "monthly_change": {
+            "big_increase": 15,
+            "small_increase": 7,
+            "big_decrease": -20,
+            "small_decrease": -12,
+            "no_change": 0  
         }
     }
     
@@ -108,12 +122,22 @@ def score_company_game(row):
     score += eps_score
     breakdown["eps"] = eps_score
 
+    #Price change scores
+    daily_change_score = stock_market_reaction(row["ticker"])[1]
+    monthly_change_score = price_change_1month(row["ticker"])[1]
+
+    price_change_bonus = POINTS["daily_change"][daily_change_score]+ POINTS["monthly_change"][monthly_change_score]
+    
+    breakdown["daily percent change"] = POINTS["daily_change"][daily_change_score]
+    breakdown["monthly percent change"] = POINTS["monthly_change"][monthly_change_score]
+
     # Bonus: Surprise Superstar
     bonus = 0
     if row["surprise_pct"] is not None and row["surprise_pct"] > 20:
         bonus += POINTS["bonus"]["surprise_superstar"]
 
     score += bonus
+    score += price_change_bonus
     breakdown["bonus"] = bonus
 
     return {
@@ -124,16 +148,17 @@ def score_company_game(row):
         "breakdown": breakdown
     }
 
-def points_from_reaction_move(pct):
+def points_from_percent_change(pct):
     if pct>.05:
-        return 10
+        return "big_increase"
     elif pct>.02:
-        return 5
+        return "small_increase"
     elif pct<= -.1:
-        return -15
+        return "big_decrease"
     elif pct<= -.05:
-        return -8
-    return 0
+        return "small_decrease"
+    return "no_change"
+
 
 def stock_open_prices_last2days(ticker):
     today = datetime.now(ET).date()
@@ -168,10 +193,8 @@ def stock_open_prices_last2days(ticker):
 def stock_market_reaction(ticker):
     prev_date, prev_open, curr_date, curr_open = stock_open_prices_last2days(ticker)
     pct_change = (float)((curr_open-prev_open)/prev_open)
-    change_in_points = points_from_reaction_move(pct_change)
-    #print(f"{t}: {prev_date} open {prev_open} -> {curr_date} open {curr_open}, pct change {pct_change:.2%}, points change {change_in_points}")
+    change_in_points = points_from_percent_change(pct_change)
     return pct_change, change_in_points
-
 
 
 #get historical price
@@ -202,7 +225,8 @@ def price_change_1month(ticker):
 
     pct_change = (curr_open - start_open)/start_open
 
-    return pct_change
+    change_in_points = points_from_percent_change(pct_change)
+    return pct_change, change_in_points
 
 results = []
 for ticker in COMPANIES:
@@ -247,7 +271,7 @@ for ticker in COMPANIES:
         }]
 
         daily_pct_change = stock_market_reaction(ticker)[0]
-        monthly_pct_change = price_change_1month(ticker)
+        monthly_pct_change = price_change_1month(ticker)[0]
 
         eps_result = eps_outcome(actual_eps, est_eps)
 
