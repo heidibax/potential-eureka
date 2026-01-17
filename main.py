@@ -78,10 +78,8 @@ POINTS = {
             "miss": -8
         },
         "bonus": {
-            "perfect_quarter_multiplier": 2,
             "surprise_superstar": 20,
             "comeback_kid": 15,
-            "disaster": -25
         }
     }
     
