@@ -342,5 +342,72 @@ def serve_example():
             'instructions': 'Open example_frontend.html directly in your browser (file://) or place it in a static folder'
         }), 404
 
+# FRONTEND API ENDPOINTS
+
+@app.route('/companies', methods=['GET'])
+def get_companies():
+    """Get all companies with their data"""
+    companies = []
+    try:
+        for idx, (ticker, data) in enumerate(earnings_rows.items(), 1):
+            company = {
+                'id': idx,
+                'name': ticker,
+                'ticker': ticker,
+                'earnings_date': data.get('Earnings Date', 'N/A'),
+                'img': f'img/{ticker.lower()}.png',
+                'score': game_score.get(ticker, 0),
+                'breakdown': {
+                    'eps_estimate': data.get('EPS Estimate', 'N/A'),
+                    'eps_actual': data.get('Reported EPS', 'N/A'),
+                    'eps_result': data.get('EPS Result', 'N/A'),
+                    'surprise_pct': data.get('Surprise %', 'N/A'),
+                    'bonus_flags': data.get('Bonus Flags', []),
+                    'daily_pct_change': stock_market_reaction.get(ticker, 'N/A'),
+                    'monthly_price_change': price_change_1month.get(ticker, 'N/A'),
+                }
+            }
+            companies.append(company)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+    return jsonify(companies)
+
+@app.route('/companies/<company_id>', methods=['GET'])
+def get_company(company_id):
+    """Get a single company by ID"""
+    try:
+        companies_list = list(earnings_rows.items())
+        idx = int(company_id) - 1
+        if idx < 0 or idx >= len(companies_list):
+            return jsonify({'error': 'Company not found'}), 404
+        
+        ticker, data = companies_list[idx]
+        company = {
+            'id': idx + 1,
+            'name': ticker,
+            'ticker': ticker,
+            'earnings_date': data.get('Earnings Date', 'N/A'),
+            'img': f'img/{ticker.lower()}.png',
+            'score': game_score.get(ticker, 0),
+            'breakdown': {
+                'eps_estimate': data.get('EPS Estimate', 'N/A'),
+                'eps_actual': data.get('Reported EPS', 'N/A'),
+                'eps_result': data.get('EPS Result', 'N/A'),
+                'surprise_pct': data.get('Surprise %', 'N/A'),
+                'bonus_flags': data.get('Bonus Flags', []),
+                'daily_pct_change': stock_market_reaction.get(ticker, 'N/A'),
+                'monthly_price_change': price_change_1month.get(ticker, 'N/A'),
+            }
+        }
+        return jsonify(company)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    """Serve static files (HTML, CSS, JS)"""
+    return send_from_directory('.', filename)
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
