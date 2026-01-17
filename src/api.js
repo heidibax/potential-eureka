@@ -16,9 +16,42 @@ async function request(endpoint, options = {}) {
 
 	return response.json();
 }
-
+/*
 export function getCompanies() {
 	return request("/companies");
+}
+*/
+
+export function getCompanies() {
+	return [
+		{	
+			id: 1, 
+			name: "Facebook", 
+			earnings_date : "Jan 10", 
+			img: "img/Facebook.jpg",
+			score: "50",
+			breakdown: {
+				eps: "1",
+				revenue: "2",
+				guidance_score: "3",
+				bonus_score: "4",
+				tags: "5",				
+			}
+		},
+		{ 	id: 2, 
+			name: "ESSO", 
+			earnings_date : "Feb 5", 
+			img: "img/ESSO.jpg",
+			score: "30",
+			breakdown: {
+				eps: "1",
+				revenue: "2",
+				guidance_score: "3",
+				bonus_score: "4",
+				tags: "5",
+			}
+		 }
+	];
 }
 
 export function getCompanyByID(id) {
