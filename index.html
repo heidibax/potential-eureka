@@ -1,14 +1,39 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Companies</title>
-		<link rel="stylesheet" href="styles.css" />
+		<title>Fantasy Stock Market League</title>
+		<link rel="stylesheet" href="style.css" />
 	</head>
 
 	<body>
-		<h1>Company Directory</h1>
-		<div id="companies"></div>
+		<!-- Homepage -->
+		<div id="homepage" class="container">
+			<img src="https://wallpapers.com/images/hd/bullish_-stock_-market_-graph_3-d-zvysagkvqi9j6msd.png" alt="Fantasy Earnings" class="homepage-img">
+			<h1>Fantasy Stock Market League</h1>
+			<p>Draft companies like fantasy football and earn points based on their stock performance. Play with friends.</p>
+			<button id="startButton">Start Draft</button>
+		</div>
 
-		<script type = "module" src="src/main.js"></script>
+		<!-- Draft Board -->
+		<div id="draftBoard" class="container hidden">
+			<h2>Budget: $<span id="budget">100</span></h2>
+			<div id="budgetBarContainer">
+				<div id="budgetBar"></div>
+			</div>
+			
+			<h3>Available Companies:</h3>
+			<div class="company-grid" id="companyList"></div>
+
+			<h3>Your Roster:</h3>
+			<ul id="roster"></ul>
+			
+			<button id="simulate">Simulate Earnings</button>
+
+			<h3>Leaderboard:</h3>
+			<ul id="leaderboard"></ul>
+			<div id="toast" class="hidden"></div>
+		</div>
+
+		<script src="fantasy-earnings/app.js"></script>
 	</body>
 </html>
