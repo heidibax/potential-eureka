@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Draft</title>
+    <link rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        .header {
+            background: #2F855A;
+            color: white;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            margin: 0 0 16px 0;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background: white;
+            color: #2F855A;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .nav-btn:hover {
+            background: #E6FFFA;
+        }
+
+        .nav-btn.active {
+            background: #4caf50;
+            color: white;
+        }
+
+        .draft-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .draft-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #1F2937;
+        }
+
+        .draft-item-info {
+            text-align: left;
+        }
+
+        .draft-item-info h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: #1F2937;
+        }
+
+        .draft-item-info p {
+            margin: 4px 0 0 0;
+            font-size: 0.85rem;
+            color: #6B7280;
+        }
+
+        .remove-btn {
+            padding: 6px 12px;
+            background: #EF4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .remove-btn:hover {
+            background: #DC2626;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6B7280;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Fantasy Stock Market League</h1>
+            <div class="nav-menu">
+                <a href="fantasy-earnings/index.html" class="nav-btn">Home</a>
+                <a href="search.html" class="nav-btn">Companies</a>
+                <a href="my-draft.html" class="nav-btn active">My Draft</a>
+                <a href="friends.html" class="nav-btn">Friends</a>
+            </div>
+        </div>
+
+        <h2>My Draft</h2>
+        <div class="draft-list" id="draftList"></div>
+        <div class="empty-message" id="emptyMessage" style="display: none;">No companies drafted yet. <a href="search.html">Search companies</a> to get started!</div>
+    </div>
+
+    <script>
+        function loadDraft() {
+            const draftList = document.getElementById("draftList");
+            const emptyMessage = document.getElementById("emptyMessage");
+
+            // Fetch draft from backend
+            fetch("/api/draft")
+                .then(response => response.json())
+                .then(draft => {
+                    draftList.innerHTML = "";
+
+                    if (draft.length === 0) {
+                        emptyMessage.style.display = "block";
+                        return;
+                    }
+
+                    emptyMessage.style.display = "none";
+
+                    draft.forEach(company => {
+                        const item = document.createElement("div");
+                        item.className = "draft-item";
+                        item.innerHTML = `
+                            <div class="draft-item-info">
+                                <h3>${company.ticker}</h3>
+                                <p>ID: ${company.id}</p>
+                            </div>
+                            <button class="remove-btn" data-id="${company.id}">Remove</button>
+                        `;
+
+                        item.querySelector(".remove-btn").addEventListener("click", () => {
+                            removeFromDraft(company.id);
+                        });
+
+                        draftList.appendChild(item);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error loading draft:", error);
+                    emptyMessage.style.display = "block";
+                    emptyMessage.textContent = "Error loading draft. Please try again.";
+                });
+        }
+
+        function removeFromDraft(companyId) {
+            fetch(`/api/draft/${companyId}`, { method: "DELETE" })
+                .then(response => {
+                    if (response.ok) {
+                        loadDraft();
+                    }
+                })
+                .catch(error => console.error("Error removing from draft:", error));
+        }
+
+        loadDraft();
+    </script>
+</body>
+</html>

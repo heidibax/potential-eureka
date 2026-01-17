@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Companies</title>
+    <link rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 1rem;
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: #45a049;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+
+        .company-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .company-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .company-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .company-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .company-item-info {
+            flex: 1;
+            text-align: left;
+        }
+
+        .company-item-info h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: white;
+        }
+
+        .company-item-info p {
+            margin: 4px 0 0 0;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .no-results {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 20px;
+        }
+
+        .header {
+            background: #2F855A;
+            color: white;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            margin: 0 0 16px 0;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background: white;
+            color: #2F855A;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .nav-btn:hover {
+            background: #E6FFFA;
+        }
+
+        .nav-btn.active {
+            background: #4caf50;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Fantasy Stock Market League</h1>
+            <div class="nav-menu">
+                <a href="fantasy-earnings/index.html" class="nav-btn">Home</a>
+                <a href="search.html" class="nav-btn active">Companies</a>
+                <a href="my-draft.html" class="nav-btn">My Draft</a>
+                <a href="friends.html" class="nav-btn">Friends</a>
+            </div>
+        </div>
+
+        <h1 class="title">Search Companies</h1>
+
+        <div class="search-container">
+            <input type="text" id="searchBar" class="search-bar" placeholder="Search by name, ticker, or industry...">
+        </div>
+
+        <div class="company-list" id="companyList"></div>
+        <div class="no-results" id="noResults" style="display: none;">No companies found</div>
+    </div>
+
+    <script type="module">
+        import { getCompanies } from "./src/api.js";
+
+        let allCompanies = [];
+
+        // Load companies from API
+        async function loadCompanies() {
+            allCompanies = await getCompanies();
+            renderSearchResults(allCompanies);
+        }
+
+        function renderSearchResults(companies) {
+            const container = document.getElementById("companyList");
+            const noResults = document.getElementById("noResults");
+
+            container.innerHTML = "";
+
+            if (companies.length === 0) {
+                noResults.style.display = "block";
+                return;
+            }
+
+            noResults.style.display = "none";
+
+            companies.forEach(company => {
+                const link = document.createElement("a");
+                link.href = `company-detail.html?id=${company.id}`;
+                link.className = "company-item";
+
+                link.innerHTML = `
+                    <img src="${company.img}" alt="${company.name}">
+                    <div class="company-item-info">
+                        <h3>${company.name} (${company.ticker})</h3>
+                    </div>
+                `;
+
+                container.appendChild(link);
+            });
+        }
+
+        function filterCompanies(query) {
+            const filtered = allCompanies.filter(company => {
+                const searchTerm = query.toLowerCase();
+                return (
+                    company.name.toLowerCase().includes(searchTerm) ||
+                    company.ticker.toLowerCase().includes(searchTerm) ||
+                    company.industry.toLowerCase().includes(searchTerm)
+                );
+            });
+
+            renderSearchResults(filtered);
+        }
+
+        // Event listeners
+        document.getElementById("searchBar").addEventListener("input", (e) => {
+            filterCompanies(e.target.value);
+        });
+
+        // Load companies on page load
+        loadCompanies();
+    </script>
+</body>
+</html>
