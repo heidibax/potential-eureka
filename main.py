@@ -77,15 +77,6 @@ POINTS = {
             "meet": 3,
             "miss": -8
         },
-        "revenue": {
-            "beat": 7,
-            "miss": -5
-        },
-        "guidance": {
-            "raised": 8,
-            "maintained": 2,
-            "lowered": -6
-        },
         "bonus": {
             "perfect_quarter_multiplier": 2,
             "surprise_superstar": 20,
@@ -94,132 +85,7 @@ POINTS = {
         }
     }
     
-# SCORING LOGIC FOR EARNINGS SEASON 
-
-# Date Estimator
-def get_company_season(latest_earnings_date):
-    today = datetime.now().date()
-    earnings_date = datetime.strptime(latest_earnings_date, "%Y-%m-%d").date()
-
-    if earnings_date <= today:
-        return "earnings_season"
-
-    return "portfolio_season"
-
-
-# Scoring Functions
-def score_eps(actual, estimate):
-    if actual > estimate:
-        return POINTS["eps"]["beat"], "beat"
-    elif actual < estimate:
-        return POINTS["eps"]["miss"], "miss"
-    else:
-        return POINTS["eps"]["meet"], "meet"
-
-def score_revenue(actual, estimate):
-    if estimate is None or actual is None:
-        return 0, "unknown"
-    if actual > estimate:
-        return POINTS["revenue"]["beat"], "beat"
-    else:
-        return POINTS["revenue"]["miss"], "miss"
-
-def infer_guidance(current_estimate, previous_estimate):
-    if current_estimate is None or previous_estimate is None:
-        return 0, "unknown"
-
-    if current_estimate > previous_estimate:
-        return POINTS["guidance"]["raised"], "raised"
-    elif current_estimate < previous_estimate:
-        return POINTS["guidance"]["lowered"], "lowered"
-    else:
-        return POINTS["guidance"]["maintained"], "maintained"
-
-def score_bonuses(eps_result, rev_result, guidance_result,
-                  eps_surprise_pct, eps_history):
-
-    bonus = 0
-    tags = []
-
-    # Perfect Quarter
-    if eps_result == "beat" and rev_result == "beat" and guidance_result == "raised":
-        tags.append("perfect_quarter")
-
-    # Surprise Superstar (computed surprise)
-    if eps_surprise_pct is not None and eps_surprise_pct > 20:
-        bonus += POINTS["bonus"]["surprise_superstar"]
-        tags.append("surprise_superstar")
-
-    # Comeback Kid (requires 3+ quarters of EPS history)
-    if len(eps_history) >= 3:
-        if eps_history[1] == "miss" and eps_history[2] == "miss" and eps_result == "beat":
-            bonus += POINTS["bonus"]["comeback_kid"]
-            tags.append("comeback_kid")
-
-    # Disaster Quarter
-    if eps_result == "miss" and rev_result == "miss" and guidance_result == "lowered":
-        bonus += POINTS["bonus"]["disaster"]
-        tags.append("disaster")
-
-    return bonus, tags
-
-def score_company_yf(
-    ticker,
-    earnings_rows,        # list of dicts from yfinance
-    analyst_estimates     # list of forward EPS estimates
-):
-    latest = earnings_rows[0]
-    season = get_company_season(latest["date"])
-
-    if season == "portfolio_season":
-        return {
-            "ticker": ticker,
-            "season": "portfolio_season",
-            "score": 0,
-            "details": "Awaiting earnings"
-        }
-
-    # EPS
-    eps_score, eps_result = score_eps(
-        latest["actual_eps"],
-        latest["estimated_eps"]
-    )
-
-    # Guidance (proxy)
-    guidance_score, guidance_result = infer_guidance(
-        analyst_estimates[0] if len(analyst_estimates) > 0 else None,
-        analyst_estimates[1] if len(analyst_estimates) > 1 else None
-    )
-
-    # EPS history for bonuses
-    eps_history = [
-        "beat" if r["actual_eps"] > r["estimated_eps"] else "miss"
-        for r in earnings_rows[:3]
-        if r["actual_eps"] is not None and r["estimated_eps"] is not None
-    ]
-
-    bonus_score, bonus_tags = score_bonuses(
-        eps_result,
-        guidance_result,
-        latest.get("surprise_pct"),
-        eps_history
-    )
-
-    total = eps_score + guidance_score + bonus_score
-
-    if "perfect_quarter" in bonus_tags:
-        total *= POINTS["bonus"]["perfect_quarter_multiplier"]
-
-    return {
-        "ticker": ticker,
-        "season": "earnings_season",
-        "score": total,
-        "breakdown": {
-            "eps": eps_score,
-            "bonus": bonus_score,
-            "tags": bonus_tags
-        }
-    }
+# Determine EPS outcome
 
 def eps_outcome(actual, estimate):
     if actual > estimate:
@@ -229,6 +95,36 @@ def eps_outcome(actual, estimate):
     else:
         return "meet"
 
+def score_company_game(row):
+    """
+    Input: one row from results (dict)
+    Output: dict with score breakdown
+    """
+
+    score = 0
+    breakdown = {}
+
+    # EPS base score
+    eps_result = row["eps_result"]
+    eps_score = POINTS["eps"][eps_result]
+    score += eps_score
+    breakdown["eps"] = eps_score
+
+    # Bonus: Surprise Superstar
+    bonus = 0
+    if row["surprise_pct"] is not None and row["surprise_pct"] > 20:
+        bonus += POINTS["bonus"]["surprise_superstar"]
+
+    score += bonus
+    breakdown["bonus"] = bonus
+
+    return {
+        "ticker": row["ticker"],
+        "game_score": score,
+        "eps_result": eps_result,
+        "surprise_pct": row["surprise_pct"],
+        "breakdown": breakdown
+    }
 
 def points_from_reaction_move(pct):
     if pct>.05:
@@ -385,4 +281,16 @@ if not results:
 df = pd.DataFrame(results)
 print(df.to_string(index=False))
 
+# SCORING RESULTS
 
+game_results = []
+
+for row in results:
+    game_score = score_company_game(row)
+    game_results.append(game_score)
+
+game_df = pd.DataFrame(game_results)
+game_df = game_df.sort_values(by="game_score", ascending=False)
+
+print("\n GAME SCORING (per company)")
+print(game_df.to_string(index=False))
