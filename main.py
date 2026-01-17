@@ -1,6 +1,10 @@
 import yfinance as yf
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
+
+from zoneinfo import ZoneInfo
+ET = ZoneInfo("America/New_York")
+
 import sys
 
 # Premium Picks — $15
@@ -43,7 +47,7 @@ wildcards = [
     "RBLX",  # Roblox
     "ROKU",  # Roku
     "ZM",    # Zoom
-    "SQ",    # Block
+    "CRWD",  # CrowdStrike
     "TWLO",  # Twilio
     "PINS",  # Pinterest
     "DKNG",  # DraftKings
@@ -64,7 +68,7 @@ risky_plays = [
     "LCID",  # Lucid
     "RIVN",  # Rivian
     "WBD",   # Warner Bros Discovery
-    "PARA"   # Paramount Global
+    "CVNA",  # Carvana
 ]
 COMPANIES = premium_picks + mid_tier + wildcards + risky_plays
 POINTS = {
@@ -226,6 +230,86 @@ def eps_outcome(actual, estimate):
         return "meet"
 
 
+def points_from_reaction_move(pct):
+    if pct>.05:
+        return 10
+    elif pct>.02:
+        return 5
+    elif pct<= -.1:
+        return -15
+    elif pct<= -.05:
+        return -8
+    return 0
+
+def stock_open_prices_last2days(ticker):
+    today = datetime.now(ET).date()
+    df = yf.download(
+        ticker, 
+        start = pd.Timestamp(today - timedelta(days=10)), #buffer in case weekend/market holiday
+        end = pd.Timestamp(today + timedelta(days=1)),
+        interval = "1d",
+        progress = False
+    )
+
+    #if df is None or df.empty():
+        #raise HTTPException(status_code=400, detail = "No stock data")
+    
+
+    df = df.sort_index()
+    df.index = pd.to_datetime(df.index).date
+
+    df = df[df.index <= today]
+
+    #if len(df) < 2:
+        #raise HTTPException(status_code=400, detail = "No two days of stock data")
+    
+    prev_date = df.index[-2]
+    curr_date = df.index[-1]
+
+    prev_open = float(df.loc[prev_date, "Open"].iloc[0])
+    curr_open = float(df.loc[curr_date, "Open"].iloc[0])
+
+    return prev_date, prev_open, curr_date, curr_open
+    
+def stock_market_reaction(ticker):
+    prev_date, prev_open, curr_date, curr_open = stock_open_prices_last2days(ticker)
+    pct_change = (float)((curr_open-prev_open)/prev_open)
+    change_in_points = points_from_reaction_move(pct_change)
+    #print(f"{t}: {prev_date} open {prev_open} -> {curr_date} open {curr_open}, pct change {pct_change:.2%}, points change {change_in_points}")
+    return pct_change, change_in_points
+
+
+
+#get historical price
+def price_change_1month(ticker):
+    today = datetime.now(ET).date()
+    df = yf.download(
+        ticker, 
+        start = pd.Timestamp(today - timedelta(days=31)), 
+        end = pd.Timestamp(today + timedelta(days=1)),
+        interval = "1d",
+        progress = False
+    )
+
+    #if df is None or df.empty():
+        #raise HTTPException(status_code=400, detail = "No stock data")
+    
+
+    df = df.sort_index()
+    df.index = pd.to_datetime(df.index).date
+
+    df = df[df.index <= today]
+
+    start_date = df.index[0]
+    curr_date = df.index[-1]
+
+    start_open = float(df.loc[start_date, "Open"].iloc[0])
+    curr_open = float(df.loc[curr_date, "Open"].iloc[0])
+
+    pct_change = (curr_open - start_open)/start_open
+
+    return pct_change
+
 results = []
 for ticker in COMPANIES:
     try:
@@ -268,6 +352,9 @@ for ticker in COMPANIES:
             "surprise_pct": surprise_pct
         }]
 
+        daily_pct_change = stock_market_reaction(ticker)[0]
+        monthly_pct_change = price_change_1month(ticker)
+
         eps_result = eps_outcome(actual_eps, est_eps)
 
         bonus_tags = []
@@ -282,7 +369,9 @@ for ticker in COMPANIES:
                 "eps_actual": float(actual_eps),
                 "eps_result": eps_result,          # beat / miss / meet
                 "surprise_pct": surprise_pct,
-                "bonus_flags": bonus_tags          # informational only
+                "bonus_flags": bonus_tags,          # informational only
+                "daily_pct_change" : daily_pct_change,
+                "monthly_price_change": monthly_pct_change
             }
         )
 
@@ -295,4 +384,5 @@ if not results:
 
 df = pd.DataFrame(results)
 print(df.to_string(index=False))
+
 
