@@ -262,16 +262,10 @@
             let userId = localStorage.getItem('userId');
             if (!userId) {
                 // Create a default user if none exists
-                fetch("/api/users", {
+                fetch(`${window.location.origin}/api/users`, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        username: 'default_user',
-                        email: '',
-                        initial_balance: 100.0
-                    })
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: "default_user", email: "", initial_balance: 100.0 })
                 })
                 .then(response => response.json())
                 .then(user => {
@@ -291,16 +285,12 @@
 
         function performAddToDraft(company, userId) {
             // Send to backend
-            fetch("/api/draft", {
+            fetch(`${window.location.origin}/api/draft`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ 
-                    id: company.id,
-                    user_id: userId
-                })
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: company.id, user_id: userId })
             })
+
             .then(response => {
                 if (!response.ok) {
                     throw new Error("Failed to add to draft");

@@ -13,7 +13,17 @@ from main import (
 )
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
+
+@app.route("/api/routes", methods=["GET"])
+def list_routes():
+    return jsonify(sorted([f"{r.rule} {sorted(list(r.methods))}" for r in app.url_map.iter_rules()]))
+
+@app.route("/api/draft_test", methods=["POST"])
+def add_to_draft_test():
+    return jsonify({"ok": True}), 200
+
+
 
 # In-memory storage (replace with database in production)
 users = {}
@@ -196,6 +206,7 @@ def get_available_stocks():
             "img": f"img/{ticker.lower()}.png",                           
             "price": price,
             "category": category,
+            "score": float(game_score.get(ticker, 0)),
             "breakdown": {
                 "eps_estimate": row.get("eps_estimate") if row else None,
                 "eps_actual": row.get("eps_actual") if row else None,
@@ -359,19 +370,8 @@ def serve_example():
 # FRONTEND API ENDPOINTS
 @app.route("/companies", methods=["GET"])
 def companies():
-    # Return all companies even if earnings_rows is empty
-    out = []
-    for i, ticker in enumerate(COMPANIES, start=1):
-        out.append({
-            "id": i,
-            "ticker": ticker,
-            "name": ticker,
-            "img": f"img/{ticker.lower()}.png",
-            "earnings_date": "N/A",
-            "score": float(game_score.get(ticker, 0)),
-            "breakdown": {}
-        })
-    return jsonify(out)
+    # Make /companies match /api/stocks exactly (so the frontend is consistent)
+    return get_available_stocks()
 
 
 

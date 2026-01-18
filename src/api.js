@@ -1,5 +1,9 @@
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL =
+  (window.location.origin && window.location.origin !== "null")
+    ? window.location.origin
+    : "http://localhost:5000";
 
+	
 async function request(endpoint, options = {}) {
 	const response = await fetch(`${API_BASE_URL}${endpoint}`, {
 		headers: {
