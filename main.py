@@ -228,92 +228,104 @@ def price_change_1month(ticker):
     change_in_points = points_from_percent_change(pct_change)
     return pct_change, change_in_points
 
-results = []
-for ticker in COMPANIES:
-    try:
-        yt = yf.Ticker(ticker)
+# Export data as module-level variables for app.py to use
+earnings_rows = {}  # Dictionary: ticker -> earnings data
+game_score = {}     # Dictionary: ticker -> score
 
-        # --- Earnings history ---
-        eh = yt.earnings_history
-        if eh is None or eh.empty:
-            print(f"Skipping {ticker}, no earnings data.")
-            continue
+def load_earnings_data():
+    """Load and process earnings data from yfinance"""
+    global earnings_rows, game_score
+    
+    results = []
+    for ticker in COMPANIES:
+        try:
+            yt = yf.Ticker(ticker)
 
-        row = eh.iloc[0]  # most recent quarter
+            # --- Earnings history ---
+            eh = yt.earnings_history
+            if eh is None or eh.empty:
+                print(f"Skipping {ticker}, no earnings data.")
+                continue
 
-        actual_eps = (
-            row.get("epsActual")
-            if "epsActual" in row
-            else row.get("Reported EPS", None)
-        )
+            row = eh.iloc[0]  # most recent quarter
 
-        est_eps = (
-            row.get("epsEstimate")
-            if "epsEstimate" in row
-            else row.get("Earnings Estimate", None)
-        )
+            actual_eps = (
+                row.get("epsActual")
+                if "epsActual" in row
+                else row.get("Reported EPS", None)
+            )
 
-        earnings_date = row.name.strftime("%Y-%m-%d")
+            est_eps = (
+                row.get("epsEstimate")
+                if "epsEstimate" in row
+                else row.get("Earnings Estimate", None)
+            )
 
-        if pd.isna(actual_eps) or pd.isna(est_eps):
-            print(f"Skipping {ticker}, missing EPS.")
-            continue
+            earnings_date = row.name.strftime("%Y-%m-%d") if hasattr(row, 'name') else "N/A"
 
-        surprise_pct = None
-        if est_eps != 0:
-            surprise_pct = ((actual_eps - est_eps) / abs(est_eps)) * 100
+            if pd.isna(actual_eps) or pd.isna(est_eps):
+                print(f"Skipping {ticker}, missing EPS.")
+                continue
 
-        earnings_rows = [{
-            "date": earnings_date,
-            "actual_eps": actual_eps,
-            "estimated_eps": est_eps,
-            "surprise_pct": surprise_pct
-        }]
+            surprise_pct = None
+            if est_eps != 0:
+                surprise_pct = ((actual_eps - est_eps) / abs(est_eps)) * 100
 
-        daily_pct_change = stock_market_reaction(ticker)[0]
-        monthly_pct_change = price_change_1month(ticker)[0]
+            daily_pct_change = stock_market_reaction(ticker)[0]
+            monthly_pct_change = price_change_1month(ticker)[0]
 
-        eps_result = eps_outcome(actual_eps, est_eps)
+            eps_result = eps_outcome(actual_eps, est_eps)
 
-        bonus_tags = []
-        if surprise_pct is not None and surprise_pct > 20:
-            bonus_tags.append("surprise_superstar")
+            bonus_tags = []
+            if surprise_pct is not None and surprise_pct > 20:
+                bonus_tags.append("surprise_superstar")
 
-        results.append(
-            {
-                "stock name": yt.info.get("shortName", "N/A"),
-                "ticker": ticker,
-                "earnings_date": earnings_date,
-                "eps_estimate": float(est_eps),
-                "eps_actual": float(actual_eps),
-                "eps_result": eps_result,          # beat / miss / meet
-                "surprise_pct": surprise_pct,
-                "bonus_flags": bonus_tags,          # informational only
-                "daily_pct_change" : daily_pct_change,
-                "monthly_price_change": monthly_pct_change
-            }
-        )
+            results.append(
+                {
+                    "stock name": yt.info.get("shortName", "N/A"),
+                    "ticker": ticker,
+                    "earnings_date": earnings_date,
+                    "eps_estimate": float(est_eps),
+                    "eps_actual": float(actual_eps),
+                    "eps_result": eps_result,          # beat / miss / meet
+                    "surprise_pct": surprise_pct,
+                    "bonus_flags": bonus_tags,          # informational only
+                    "daily_pct_change" : daily_pct_change,
+                    "monthly_price_change": monthly_pct_change
+                }
+            )
 
-    except Exception as e:
-        print(f"Error processing {ticker}: {e}")
+        except Exception as e:
+            print(f"Error processing {ticker}: {e}")
 
-if not results: 
-    print("No results to display.")
-    sys.exit(0)
+    if not results:
+        if "--ingest" in sys.argv:
+            print("No results to display.")
+        return
 
-df = pd.DataFrame(results)
-print(df.to_string(index=False))
+    df = pd.DataFrame(results)
+    if "--ingest" in sys.argv:
+        print(df.to_string(index=False))
 
-# SCORING RESULTS
+    # SCORING RESULTS
+    game_results = []
 
-game_results = []
+    for row in results:
+        score = score_company_game(row)
+        game_results.append(score)
+        # Store in dictionaries for export
+        ticker = row["ticker"]
+        earnings_rows[ticker] = row
+        game_score[ticker] = score["game_score"]
 
-for row in results:
-    game_score = score_company_game(row)
-    game_results.append(game_score)
+    game_df = pd.DataFrame(game_results)
+    game_df = game_df.sort_values(by="game_score", ascending=False)
 
-game_df = pd.DataFrame(game_results)
-game_df = game_df.sort_values(by="game_score", ascending=False)
+    if "--ingest" in sys.argv:
+        print("\n GAME SCORING (per company)")
+        print(game_df.to_string(index=False))
 
-print("\n GAME SCORING (per company)")
-print(game_df.to_string(index=False))
+# Load data when module is imported
+print("Loading earnings data...")
+load_earnings_data()
+print(f"Loaded {len(earnings_rows)} companies with earnings data")
