@@ -186,7 +186,7 @@ def get_available_stocks():
         stocks.append({
             'ticker': ticker,
             'price': price,
-            'category': category
+            'category': category,
         })
     
     return jsonify(stocks)

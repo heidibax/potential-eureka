@@ -33,6 +33,7 @@ export async function getCompanies() {
 			id: index + 1,
 			name: stock.ticker,
 			ticker: stock.ticker,
+			price: stock.price,
 			img: "https://via.placeholder.com/64",
 		}));
 	} catch (err) {
