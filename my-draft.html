@@ -129,7 +129,7 @@
             const emptyMessage = document.getElementById("emptyMessage");
 
             // Get user_id from localStorage or create default user
-            let userId = localStorage.getItem('userId');
+            let userId = localStorage.getItem('currentUserId');
             const url = userId ? `/api/draft?user_id=${userId}` : '/api/draft';
 
             // Fetch draft from backend
@@ -171,7 +171,7 @@
         }
 
         function removeFromDraft(companyId) {
-            let userId = localStorage.getItem('userId');
+            let userId = localStorage.getItem('currentUserId');
             const url = userId ? `/api/draft/${companyId}?user_id=${userId}` : `/api/draft/${companyId}`;
             
             fetch(url, { method: "DELETE" })

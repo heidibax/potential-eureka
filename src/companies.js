@@ -20,10 +20,18 @@ export function renderCompanies(container, companies) {
 			this.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect fill="%23ccc"/><text x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999">${company.ticker}</text></svg>';
 		};
 		
-		//make drop-down
+		// Display price (big) and score (small)
+		const priceDisplay = document.createElement("p");
+		priceDisplay.className = "company-price";
+		priceDisplay.textContent = `$${company.price.toFixed(2)}`;
+		
+		const scoreDisplay = document.createElement("p");
+		scoreDisplay.className = "company-score";
+		scoreDisplay.textContent = `${company.score || 0} pts`;
+
 		const scoreBtn = document.createElement("button");
 		scoreBtn.className = "score-btn";
-		scoreBtn.textContent = `Score: ${company.score || 0}`;
+		scoreBtn.textContent = "View Details";
 
 		const details = document.createElement("div");
 		details.className = "score-details";
@@ -43,7 +51,7 @@ export function renderCompanies(container, companies) {
 			details.style.display = isOpen ? "none" : "block";
 		});
 
-		card.append(name, earningsDate, img, scoreBtn, details);
+		card.append(name, earningsDate, img, priceDisplay, scoreDisplay, scoreBtn, details);
 		container.appendChild(card);
 	});
 }

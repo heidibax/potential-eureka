@@ -71,6 +71,20 @@
             color: rgba(255, 255, 255, 0.8);
         }
 
+        .company-price-large {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4caf50;
+            margin: 6px 0 0 0 !important;
+        }
+
+        .company-score-small {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin: 2px 0 4px 0 !important;
+            font-weight: 500;
+        }
+
         .no-results {
             text-align: center;
             color: rgba(255, 255, 255, 0.7);
@@ -198,12 +212,11 @@
                 <img src="${company.img}" alt="${company.name}">
                 <div class="company-item-info">
                     <h3>${company.name || company.ticker} (${company.ticker})</h3>
+                    <p class="company-price-large">$${company.price.toFixed(2)}</p>
+                    <p class="company-score-small">${company.score || 0} pts</p>
                     <p>EPS: ${b.eps_actual ?? "N/A"} (est ${b.eps_estimate ?? "N/A"}) • ${b.eps_result ?? "N/A"}</p>
-                    <p>Surprise: ${b.surprise_pct ?? "N/A"}% • Earnings: ${b.earnings_date ?? "N/A"}</p>
                 </div>
                 `;
-
-
 
                 container.appendChild(link);
             });
