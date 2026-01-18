@@ -153,6 +153,7 @@
         <div class="detail-header" id="detailHeader"></div>
 
         <div class="score-display" id="scoreDisplay"></div>
+        <div class="price-display" id="priceDisplay"></div>
 
         <div class="action-buttons">
             <button id="addDraftBtn" class="add-draft-btn">Add to Draft</button>
@@ -207,6 +208,7 @@
 
             // Score
             document.getElementById("scoreDisplay").textContent = company.score;
+            document.getElementById("priceDisplay").textContent = `$${company.price}`;
 
             // Breakdown
             document.getElementById("breakdownGrid").innerHTML = `
