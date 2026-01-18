@@ -70,7 +70,7 @@ risky_plays = [
     "WBD",   # Warner Bros Discovery
     "CVNA",  # Carvana
 ]
-COMPANIES = premium_picks + mid_tier + wildcards + risky_plays
+COMPANIES =risky_plays #premium_picks + mid_tier +  wildcards + 
 POINTS = {
         "eps": {
             "beat": 10,
