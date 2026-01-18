@@ -39,7 +39,7 @@ def get_or_create_default_user():
     user_id = str(uuid.uuid4())
     default_user = User(user_id, default_username, "", 100.0)
     users[user_id] = default_user
-    return default_user
+    return default_user, default_user.user_id
 
 
 # Stock pricing (simplified - in production, fetch real-time prices)
