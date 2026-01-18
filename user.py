@@ -44,6 +44,10 @@ class User:
     def update_balance(self, amount):
         self.balance += float(amount)
     
+    def can_afford(self, price_per_share, shares):
+        total_cost = price_per_share * shares
+        return total_cost <= self.balance
+    
     # SOCIAL 
     
     def follow(self, user_to_follow):

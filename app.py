@@ -359,6 +359,17 @@ def get_companies():
         for ticker, data in earnings_rows.items():
             tier, price = get_tier(ticker)
             
+            # Calculate score breakdown for this company
+            score_result = score_company_game(data)
+            score_value = score_result.get('game_score', 0)
+            breakdown = score_result.get('breakdown', {})
+            
+            # Format daily and monthly changes as percentages
+            daily_pct = data.get('daily_pct_change', 0)
+            monthly_pct = data.get('monthly_price_change', 0)
+            daily_pct_str = f"{daily_pct * 100:.2f}%" if isinstance(daily_pct, (int, float)) else str(daily_pct)
+            monthly_pct_str = f"{monthly_pct * 100:.2f}%" if isinstance(monthly_pct, (int, float)) else str(monthly_pct)
+            
             company = {
                 'id': company_idx,
                 'name': data.get('stock name', ticker),
@@ -367,7 +378,7 @@ def get_companies():
                 'price': price,
                 'earnings_date': data.get('earnings_date', 'N/A'),
                 'img': f'img/{ticker.lower()}.png',
-                'score': game_score.get(ticker, 0),
+                'score': score_value,
                 'industry': 'Technology',  # You can enhance this later
                 'breakdown': {
                     'eps_estimate': round(float(data.get('eps_estimate', 0)), 2),
@@ -375,15 +386,22 @@ def get_companies():
                     'eps_result': data.get('eps_result', 'N/A'),
                     'surprise_pct': round(float(data.get('surprise_pct', 0)), 2) if data.get('surprise_pct') else 0,
                     'bonus_flags': data.get('bonus_flags', []),
-                    'daily_pct_change': data.get('daily_pct_change', 'N/A'),
-                    'monthly_price_change': data.get('monthly_price_change', 'N/A'),
-                    'tags': ', '.join(data.get('bonus_flags', []))
+                    'daily_pct_change': daily_pct_str,
+                    'monthly_price_change': monthly_pct_str,
+                    'tags': ', '.join(data.get('bonus_flags', [])) if data.get('bonus_flags') else '',
+                    # Add score breakdown components
+                    'eps': breakdown.get('eps', 0),
+                    'daily percent change': breakdown.get('daily percent change', 0),
+                    'monthly percent change': breakdown.get('monthly percent change', 0),
+                    'bonus': breakdown.get('bonus', 0)
                 }
             }
             companies.append(company)
             company_idx += 1
     except Exception as e:
         print(f"Error in get_companies: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e), 'earnings_rows_count': len(earnings_rows)}), 500
     
     return jsonify(companies)
@@ -412,6 +430,17 @@ def get_company(company_id):
         
         tier, price = get_tier(ticker)
         
+        # Calculate score breakdown for this company
+        score_result = score_company_game(data)
+        score_value = score_result.get('game_score', 0)
+        breakdown = score_result.get('breakdown', {})
+        
+        # Format daily and monthly changes as percentages
+        daily_pct = data.get('daily_pct_change', 0)
+        monthly_pct = data.get('monthly_price_change', 0)
+        daily_pct_str = f"{daily_pct * 100:.2f}%" if isinstance(daily_pct, (int, float)) else str(daily_pct)
+        monthly_pct_str = f"{monthly_pct * 100:.2f}%" if isinstance(monthly_pct, (int, float)) else str(monthly_pct)
+        
         company = {
             'id': idx + 1,
             'name': data.get('stock name', ticker),
@@ -420,7 +449,7 @@ def get_company(company_id):
             'price': price,
             'earnings_date': data.get('earnings_date', 'N/A'),
             'img': f'img/{ticker.lower()}.png',
-            'score': game_score.get(ticker, 0),
+            'score': score_value,
             'industry': 'Technology',
             'breakdown': {
                 'eps_estimate': round(float(data.get('eps_estimate', 0)), 2),
@@ -428,13 +457,20 @@ def get_company(company_id):
                 'eps_result': data.get('eps_result', 'N/A'),
                 'surprise_pct': round(float(data.get('surprise_pct', 0)), 2) if data.get('surprise_pct') else 0,
                 'bonus_flags': data.get('bonus_flags', []),
-                'daily_pct_change': data.get('daily_pct_change', 'N/A'),
-                'monthly_price_change': data.get('monthly_price_change', 'N/A'),
-                'tags': ', '.join(data.get('bonus_flags', []))
+                'daily_pct_change': daily_pct_str,
+                'monthly_price_change': monthly_pct_str,
+                'tags': ', '.join(data.get('bonus_flags', [])) if data.get('bonus_flags') else '',
+                # Add score breakdown components
+                'eps': breakdown.get('eps', 0),
+                'daily percent change': breakdown.get('daily percent change', 0),
+                'monthly percent change': breakdown.get('monthly percent change', 0),
+                'bonus': breakdown.get('bonus', 0)
             }
         }
         return jsonify(company)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/leaderboard', methods=['GET'])
@@ -443,11 +479,20 @@ def get_leaderboard():
     try:
         leaderboard = []
         for user_id, user in users.items():
+            # Calculate user's total game score
+            portfolio = user.portfolio.holdings
+            total_score = 0
+            
+            for ticker, shares in portfolio.items():
+                if ticker in game_score:
+                    score_per_share = game_score[ticker]
+                    total_score += score_per_share * shares
+            
             user_data = user.get_user()
             leaderboard.append({
                 'player_id': user_id,
                 'player_name': user_data.get('username', 'Unknown'),
-                'score': user_data.get('balance', 0)
+                'score': total_score
             })
         # Sort by score descending
         leaderboard.sort(key=lambda x: x['score'], reverse=True)
@@ -461,10 +506,23 @@ def get_leaderboard():
 def get_draft():
     """Get the current user's draft (portfolio)"""
     try:
-        # For now, we'll use a simple session or user ID
-        # In production, you'd track which user is making the request
+        # Get user_id from query params or use default user
         user_id = request.args.get('user_id')
-        if not user_id or user_id not in users:
+        
+        # If no user_id provided, create or get default user
+        if not user_id:
+            # Check if default user exists
+            default_username = 'default_user'
+            default_user = next((u for u in users.values() if u.username == default_username), None)
+            if not default_user:
+                # Create default user
+                user_id = str(uuid.uuid4())
+                default_user = User(user_id, default_username, '', 100.0)
+                users[user_id] = default_user
+            else:
+                user_id = default_user.user_id
+        
+        if user_id not in users:
             return jsonify({'error': 'User not found'}), 404
         
         user = users[user_id]
@@ -473,11 +531,12 @@ def get_draft():
         
         # Format portfolio for frontend
         draft = []
+        ticker_list = list(earnings_rows.keys())
         for ticker, shares in portfolio.items():
             if ticker in earnings_rows:
                 data = earnings_rows[ticker]
                 draft.append({
-                    'id': list(earnings_rows.keys()).index(ticker) + 1,
+                    'id': ticker_list.index(ticker) + 1,
                     'ticker': ticker,
                     'name': data.get('stock name', ticker),
                     'shares': shares,
@@ -487,6 +546,8 @@ def get_draft():
         
         return jsonify(draft)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/draft', methods=['POST'])
@@ -498,7 +559,18 @@ def add_to_draft():
         company_id = data.get('id')
         shares = data.get('shares', 1)
         
-        if not user_id or user_id not in users:
+        # If no user_id provided, create or get default user
+        if not user_id:
+            default_username = 'default_user'
+            default_user = next((u for u in users.values() if u.username == default_username), None)
+            if not default_user:
+                user_id = str(uuid.uuid4())
+                default_user = User(user_id, default_username, '', 100.0)
+                users[user_id] = default_user
+            else:
+                user_id = default_user.user_id
+        
+        if user_id not in users:
             return jsonify({'error': 'User not found'}), 404
         
         # Get the ticker from company_id
@@ -513,7 +585,7 @@ def add_to_draft():
         total_cost = price_per_share * shares
         
         # Check if user can afford
-        if total_cost > user.balance:
+        if not user.can_afford(price_per_share, shares):
             return jsonify({'error': 'Insufficient balance'}), 400
         
         # Add to portfolio
@@ -523,9 +595,12 @@ def add_to_draft():
         return jsonify({
             'success': True,
             'message': f'Added {shares} share(s) of {ticker}',
-            'remaining_balance': user.balance
+            'remaining_balance': user.balance,
+            'user_id': user_id
         }), 201
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/draft/<company_id>', methods=['DELETE'])
@@ -535,7 +610,15 @@ def remove_from_draft(company_id):
         user_id = request.args.get('user_id')
         shares = request.args.get('shares', 1, type=int)
         
-        if not user_id or user_id not in users:
+        # If no user_id provided, get default user
+        if not user_id:
+            default_username = 'default_user'
+            default_user = next((u for u in users.values() if u.username == default_username), None)
+            if not default_user:
+                return jsonify({'error': 'User not found'}), 404
+            user_id = default_user.user_id
+        
+        if user_id not in users:
             return jsonify({'error': 'User not found'}), 404
         
         # Get the ticker from company_id
@@ -562,15 +645,26 @@ def remove_from_draft(company_id):
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/draft/simulate', methods=['POST'])
 def simulate_earnings():
     """Simulate earnings and calculate scores for draft"""
     try:
-        user_id = request.json.get('user_id')
+        data = request.json or {}
+        user_id = data.get('user_id')
         
-        if not user_id or user_id not in users:
+        # If no user_id provided, get default user
+        if not user_id:
+            default_username = 'default_user'
+            default_user = next((u for u in users.values() if u.username == default_username), None)
+            if not default_user:
+                return jsonify({'error': 'User not found'}), 404
+            user_id = default_user.user_id
+        
+        if user_id not in users:
             return jsonify({'error': 'User not found'}), 404
         
         user = users[user_id]
@@ -600,8 +694,41 @@ def simulate_earnings():
             'results': results
         })
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/friends', methods=['GET'])
+def get_friends():
+    """Get list of all users (friends)"""
+    try:
+        friends = []
+        for user_id, user in users.items():
+            user_data = user.get_user()
+            portfolio = user_data.get('portfolio', {})
+            
+            # Calculate total score
+            total_score = 0
+            for ticker, shares in portfolio.items():
+                if ticker in game_score:
+                    total_score += game_score[ticker] * shares
+            
+            friends.append({
+                'id': user_id,
+                'name': user_data.get('username', 'Unknown'),
+                'score': total_score,
+                'companies_count': len(portfolio)
+            })
+        
+        # Sort by score descending
+        friends.sort(key=lambda x: x['score'], reverse=True)
+        return jsonify(friends)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+# Static file serving routes (must come before catch-all)
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     """Serve static files from root directory"""
@@ -609,17 +736,57 @@ def serve_static(filename):
 
 @app.route('/style.css')
 def serve_style():
-    """Serve CSS from fantasy-earnings folder"""
-    return send_from_directory('fantasy-earnings', 'style.css')
+    """Serve CSS from root directory"""
+    try:
+        return send_from_directory('.', 'style.css')
+    except:
+        return send_from_directory('fantasy-earnings', 'style.css')
+
+@app.route('/src/<path:filename>')
+def serve_src(filename):
+    """Serve JavaScript files from src directory"""
+    return send_from_directory('src', filename)
+
+@app.route('/img/<path:filename>')
+def serve_img(filename):
+    """Serve image files from img directory"""
+    return send_from_directory('img', filename)
+
+# HTML page routes
+@app.route('/search.html')
+def serve_search():
+    """Serve search page"""
+    return send_from_directory('.', 'search.html')
+
+@app.route('/my-draft.html')
+def serve_my_draft():
+    """Serve my draft page"""
+    return send_from_directory('.', 'my-draft.html')
+
+@app.route('/company-detail.html')
+def serve_company_detail():
+    """Serve company detail page"""
+    return send_from_directory('.', 'company-detail.html')
+
+@app.route('/friends.html')
+def serve_friends():
+    """Serve friends page"""
+    return send_from_directory('.', 'friends.html')
 
 @app.route('/<path:filename>')
 def serve_files(filename):
-    """Serve files from fantasy-earnings folder (CSS, JS, images, etc)"""
+    """Serve files from root or fantasy-earnings folder"""
+    # Skip API routes
+    if filename.startswith('api/'):
+        return jsonify({'error': 'API endpoint not found'}), 404
+    
+    # Try root directory first
     try:
-        return send_from_directory('fantasy-earnings', filename)
+        return send_from_directory('.', filename)
     except:
+        # Then try fantasy-earnings folder
         try:
-            return send_from_directory('.', filename)
+            return send_from_directory('fantasy-earnings', filename)
         except:
             return jsonify({'error': f'File {filename} not found'}), 404
 

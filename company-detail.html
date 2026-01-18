@@ -258,13 +258,48 @@
         }
 
         function addToDraft(company) {
+            // Get or create user_id from localStorage
+            let userId = localStorage.getItem('userId');
+            if (!userId) {
+                // Create a default user if none exists
+                fetch("/api/users", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        username: 'default_user',
+                        email: '',
+                        initial_balance: 100.0
+                    })
+                })
+                .then(response => response.json())
+                .then(user => {
+                    userId = user.user_id;
+                    localStorage.setItem('userId', userId);
+                    performAddToDraft(company, userId);
+                })
+                .catch(error => {
+                    console.error("Error creating user:", error);
+                    // Try without user_id (backend will create default)
+                    performAddToDraft(company, null);
+                });
+            } else {
+                performAddToDraft(company, userId);
+            }
+        }
+
+        function performAddToDraft(company, userId) {
             // Send to backend
             fetch("/api/draft", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ id: company.id })
+                body: JSON.stringify({ 
+                    id: company.id,
+                    user_id: userId
+                })
             })
             .then(response => {
                 if (!response.ok) {

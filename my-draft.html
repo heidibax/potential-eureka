@@ -127,8 +127,12 @@
             const draftList = document.getElementById("draftList");
             const emptyMessage = document.getElementById("emptyMessage");
 
+            // Get user_id from localStorage or create default user
+            let userId = localStorage.getItem('userId');
+            const url = userId ? `/api/draft?user_id=${userId}` : '/api/draft';
+
             // Fetch draft from backend
-            fetch("/api/draft")
+            fetch(url)
                 .then(response => response.json())
                 .then(draft => {
                     draftList.innerHTML = "";
@@ -166,7 +170,10 @@
         }
 
         function removeFromDraft(companyId) {
-            fetch(`/api/draft/${companyId}`, { method: "DELETE" })
+            let userId = localStorage.getItem('userId');
+            const url = userId ? `/api/draft/${companyId}?user_id=${userId}` : `/api/draft/${companyId}`;
+            
+            fetch(url, { method: "DELETE" })
                 .then(response => {
                     if (response.ok) {
                         loadDraft();
