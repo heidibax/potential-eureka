@@ -24,3 +24,7 @@ export function getCompanies() {
 export function getCompanyByID(id) {
 	return request(`/companies/${id}`);
 }
+
+export function getDraftedCompanies() {
+	return request("/companies/drafted");
+}

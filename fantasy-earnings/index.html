@@ -30,15 +30,16 @@
 
         .nav-btn {
             padding: 10px 20px;
-            background: white;
-            color: #2F855A;
-            border: none;
+            background: #2F855A;
+            color: white;
+            border: 1.5px solid white;
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
             text-decoration: none;
             transition: background 0.2s;
             font-size: 0.95rem;
+       
         }
 
         .nav-btn:hover {
@@ -46,7 +47,7 @@
         }
 
         .nav-btn.active {
-            background: #4caf50;
+            background:  #93bc96;
             color: white;
         }
 
@@ -83,6 +84,15 @@
             color: #2F855A;
             min-width: 30px;
         }
+
+        .homepageDescription {
+            color: #2F855A;
+            
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 2.0rem;
+
+        }
     </style>
 
 </head>
@@ -100,11 +110,10 @@
         </div>
 
         <div id="homepage">
-            <img src="https://wallpapers.com/images/hd/bullish_-stock_-market_-graph_3-d-zvysagkvqi9j6msd.png" alt="Fantasy Earnings" class="homepage-img">
-            <h1 class="title">Fantasy Stock Market League</h1>
-            <p>Draft companies like fantasy football and earn points based on their stock performance. Play with friends.</p>
-            <a id="startButton" href="../search.html" class="btn">Start Draft</a>
-
+            <img src=https://static.vecteezy.com/system/resources/thumbnails/014/580/130/small/businessman-in-black-formal-suit-leaning-on-pile-of-gold-coins-with-growing-statistics-ornament-on-the-back-3d-rendering-of-business-investment-concept-png.png alt="Fantasy Earnings" class="homepage-img">
+            
+            <p class="homepageDescription">Draft companies like fantasy football and earn points based on their stock performance. Play with friends.</p>
+        
             <div class="leaderboard-section">
                 <h2>Leaderboard</h2>
                 <ul class="leaderboard-list" id="leaderboardList"></ul>

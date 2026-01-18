@@ -62,7 +62,7 @@
         .company-item-info h3 {
             margin: 0;
             font-size: 1rem;
-            color: white;
+            color: #2F855A;
         }
 
         .company-item-info p {
@@ -101,15 +101,16 @@
 
         .nav-btn {
             padding: 10px 20px;
-            background: white;
-            color: #2F855A;
-            border: none;
+            background: #2F855A;
+            color: white;
+            border: 1.5px solid white;
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
             text-decoration: none;
             transition: background 0.2s;
             font-size: 0.95rem;
+       
         }
 
         .nav-btn:hover {
@@ -117,7 +118,7 @@
         }
 
         .nav-btn.active {
-            background: #4caf50;
+            background:  #93bc96;
             color: white;
         }
     </style>
@@ -138,7 +139,7 @@
         <h1 class="title">Search Companies</h1>
 
         <div class="search-container">
-            <input type="text" id="searchBar" class="search-bar" placeholder="Search by name, ticker, or industry...">
+            <input type="text" id="searchBar" class="search-bar" placeholder="Search by name or ticker...">
         </div>
 
         <div class="company-list" id="companyList"></div>
@@ -190,8 +191,7 @@
                 const searchTerm = query.toLowerCase();
                 return (
                     company.name.toLowerCase().includes(searchTerm) ||
-                    company.ticker.toLowerCase().includes(searchTerm) ||
-                    company.industry.toLowerCase().includes(searchTerm)
+                    company.ticker.toLowerCase().includes(searchTerm)
                 );
             });
 
