@@ -176,20 +176,40 @@ def sell_stock(user_id):
 
 @app.route('/api/stocks', methods=['GET'])
 def get_available_stocks():
-    """Get list of all available stocks with their prices"""
     stocks = []
-    for ticker in COMPANIES:
+
+    for i, ticker in enumerate(COMPANIES, start=1):
         price = get_stock_price(ticker)
-        category = "premium" if ticker in premium_picks else \
-                   "mid_tier" if ticker in mid_tier else \
-                   "wildcard" if ticker in wildcards else "risky"
+        category = (
+            "premium" if ticker in premium_picks else
+            "mid_tier" if ticker in mid_tier else
+            "wildcard" if ticker in wildcards else
+            "risky"
+        )
+
+        row = earnings_rows.get(ticker)
+
         stocks.append({
-            'ticker': ticker,
-            'price': price,
-            'category': category
+            "id": i,                
+            "ticker": ticker,
+            "name": (row.get("stock name", ticker) if row else ticker), 
+            "img": f"img/{ticker.lower()}.png",                           
+            "price": price,
+            "category": category,
+            "breakdown": {
+                "eps_estimate": row.get("eps_estimate") if row else None,
+                "eps_actual": row.get("eps_actual") if row else None,
+                "eps_result": row.get("eps_result", "N/A") if row else "N/A",
+                "surprise_pct": row.get("surprise_pct") if row else None,
+                "bonus_flags": row.get("bonus_flags", []) if row else [],
+                "daily_pct_change": row.get("daily_pct_change") if row else None,
+                "monthly_price_change": row.get("monthly_price_change") if row else None,
+                "earnings_date": row.get("earnings_date", "N/A") if row else "N/A",
+            }
         })
-    
+
     return jsonify(stocks)
+
 
 @app.route('/api/stocks/<ticker>/earnings', methods=['GET'])
 def get_stock_earnings(ticker):
@@ -509,11 +529,17 @@ def get_draft():
 def add_to_draft():
     """Add a company to the current user's draft"""
     try:
-        data = request.json
+        data = request.json or {}
+        print("ADD TO DRAFT PAYLOAD:", data) 
+
         user_id = data.get('user_id')
-        company_id = data.get('id')
-        shares = data.get('shares', 1)
-        
+
+        company_id = int(data.get('id'))        # id from UI (1..len(COMPANIES))
+        shares = int(data.get('shares', 1))
+
+        if shares <= 0:
+            return jsonify({'error': 'Shares must be positive'}), 400
+
         # If no user_id provided, create or get default user
         if not user_id:
             default_username = 'default_user'
@@ -524,39 +550,41 @@ def add_to_draft():
                 users[user_id] = default_user
             else:
                 user_id = default_user.user_id
-        
+
         if user_id not in users:
             return jsonify({'error': 'User not found'}), 404
-        
-        # Get the ticker from company_id
-        companies_list = list(earnings_rows.items())
-        if company_id < 1 or company_id > len(companies_list):
+
+        if company_id < 1 or company_id > len(COMPANIES):
             return jsonify({'error': 'Company not found'}), 404
-        
-        ticker, _ = companies_list[company_id - 1]
-        
+
+        ticker = COMPANIES[company_id - 1]
+
         user = users[user_id]
         price_per_share = get_stock_price(ticker)
         total_cost = price_per_share * shares
-        
-        # Check if user can afford
+
         if not user.can_afford(price_per_share, shares):
             return jsonify({'error': 'Insufficient balance'}), 400
-        
-        # Add to portfolio
+
         user.portfolio.add_stock(ticker, shares)
         user.update_balance(-total_cost)
-        
+
         return jsonify({
             'success': True,
             'message': f'Added {shares} share(s) of {ticker}',
+            'ticker': ticker,
+            'shares': shares,
+            'price_per_share': price_per_share,
+            'total_cost': total_cost,
             'remaining_balance': user.balance,
             'user_id': user_id
         }), 201
+
     except Exception as e:
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/draft/<company_id>', methods=['DELETE'])
 def remove_from_draft(company_id):

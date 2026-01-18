@@ -193,12 +193,17 @@
                 link.href = `company-detail.html?id=${company.id}`;
                 link.className = "company-item";
 
+                const b = company.breakdown || {};
                 link.innerHTML = `
-                    <img src="${company.img}" alt="${company.name}">
-                    <div class="company-item-info">
-                        <h3>${company.name} (${company.ticker})</h3>
-                    </div>
+                <img src="${company.img}" alt="${company.name}">
+                <div class="company-item-info">
+                    <h3>${company.name || company.ticker} (${company.ticker})</h3>
+                    <p>EPS: ${b.eps_actual ?? "N/A"} (est ${b.eps_estimate ?? "N/A"}) • ${b.eps_result ?? "N/A"}</p>
+                    <p>Surprise: ${b.surprise_pct ?? "N/A"}% • Earnings: ${b.earnings_date ?? "N/A"}</p>
+                </div>
                 `;
+
+
 
                 container.appendChild(link);
             });
