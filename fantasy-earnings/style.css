@@ -39,6 +39,11 @@ body {
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
+.homepageDescription {
+    font-size: 1.2rem;
+    color: white;
+    margin-bottom: 20px;
+}
 .company-ticker {
     font-size: 0.75rem;
     font-weight: bold;
