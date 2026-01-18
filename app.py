@@ -29,6 +29,19 @@ def add_to_draft_test():
 users = {}
 user_counter = 0
 
+def get_or_create_default_user():
+    default_username = "default_user"
+    default_user = next((u for u in users.values() if u.username == default_username), None)
+
+    if default_user:
+        return default_user
+
+    user_id = str(uuid.uuid4())
+    default_user = User(user_id, default_username, "", 100.0)
+    users[user_id] = default_user
+    return default_user
+
+
 # Stock pricing (simplified - in production, fetch real-time prices)
 STOCK_PRICES = {
     "premium": 15,
@@ -483,6 +496,13 @@ def get_draft():
     try:
         # Get user_id from query params or use default user
         user_id = request.args.get('user_id')
+
+        if (not user_id) or (user_id not in users):
+            user = get_or_create_default_user()
+            user_id = user.user_id
+        else:
+            user = users[user_id]
+
         
         # If no user_id provided, create or get default user
         if not user_id:
@@ -533,6 +553,13 @@ def add_to_draft():
         print("ADD TO DRAFT PAYLOAD:", data) 
 
         user_id = data.get('user_id')
+
+        # If missing OR stale (server restarted), fallback to default user
+        if (not user_id) or (user_id not in users):
+            user = get_or_create_default_user()
+            user_id = user.user_id
+        else:
+            user = users[user_id]
 
         company_id = int(data.get('id'))        # id from UI (1..len(COMPANIES))
         shares = int(data.get('shares', 1))

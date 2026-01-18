@@ -298,18 +298,17 @@
                 return response.json();
             })
             .then(data => {
-                // Show success message
+                if (data.user_id) {
+                    localStorage.setItem("userId", data.user_id);
+                }
+
                 const successMsg = document.getElementById("successMessage");
                 successMsg.style.display = "block";
-                
-                // Hide after 2 seconds
-                setTimeout(() => {
-                    successMsg.style.display = "none";
-                }, 2000);
+                setTimeout(() => successMsg.style.display = "none", 2000);
 
-                // Disable button
                 document.getElementById("addDraftBtn").disabled = true;
-            })
+                })
+
             .catch(error => {
                 console.error("Error:", error);
                 alert("Failed to add to draft. Please try again.");
