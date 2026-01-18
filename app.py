@@ -199,7 +199,7 @@ def get_stock_earnings(ticker):
         return jsonify({'error': 'Stock not found'}), 404
     
     try:
-        earnings_data = earnings_rows(ticker)
+        earnings_data = earnings_rows.get(ticker)
         if earnings_data:
             return jsonify(earnings_data)
         else:
@@ -337,74 +337,23 @@ def serve_example():
         }), 404
 
 # FRONTEND API ENDPOINTS
+@app.route("/companies", methods=["GET"])
+def companies():
+    # Return all companies even if earnings_rows is empty
+    out = []
+    for i, ticker in enumerate(COMPANIES, start=1):
+        out.append({
+            "id": i,
+            "ticker": ticker,
+            "name": ticker,
+            "img": f"img/{ticker.lower()}.png",
+            "earnings_date": "N/A",
+            "score": float(game_score.get(ticker, 0)),
+            "breakdown": {}
+        })
+    return jsonify(out)
 
-@app.route('/companies', methods=['GET'])
-def get_companies():
-    """Get all companies with their data"""
-    companies = []
-    try:
-        # Get company tier for pricing
-        def get_tier(ticker):
-            if ticker in premium_picks:
-                return 'premium', 15
-            elif ticker in mid_tier:
-                return 'mid_tier', 10
-            elif ticker in wildcards:
-                return 'wildcard', 5
-            else:
-                return 'risky', 3
-        
-        # Build company list from earnings_rows data
-        company_idx = 1
-        for ticker, data in earnings_rows.items():
-            tier, price = get_tier(ticker)
-            
-            # Calculate score breakdown for this company
-            score_result = score_company_game(data)
-            score_value = score_result.get('game_score', 0)
-            breakdown = score_result.get('breakdown', {})
-            
-            # Format daily and monthly changes as percentages
-            daily_pct = data.get('daily_pct_change', 0)
-            monthly_pct = data.get('monthly_price_change', 0)
-            daily_pct_str = f"{daily_pct * 100:.2f}%" if isinstance(daily_pct, (int, float)) else str(daily_pct)
-            monthly_pct_str = f"{monthly_pct * 100:.2f}%" if isinstance(monthly_pct, (int, float)) else str(monthly_pct)
-            
-            company = {
-                'id': company_idx,
-                'name': data.get('stock name', ticker),
-                'ticker': ticker,
-                'tier': tier,
-                'price': price,
-                'earnings_date': data.get('earnings_date', 'N/A'),
-                'img': f'img/{ticker.lower()}.png',
-                'score': score_value,
-                'industry': 'Technology',  # You can enhance this later
-                'breakdown': {
-                    'eps_estimate': round(float(data.get('eps_estimate', 0)), 2),
-                    'eps_actual': round(float(data.get('eps_actual', 0)), 2),
-                    'eps_result': data.get('eps_result', 'N/A'),
-                    'surprise_pct': round(float(data.get('surprise_pct', 0)), 2) if data.get('surprise_pct') else 0,
-                    'bonus_flags': data.get('bonus_flags', []),
-                    'daily_pct_change': daily_pct_str,
-                    'monthly_price_change': monthly_pct_str,
-                    'tags': ', '.join(data.get('bonus_flags', [])) if data.get('bonus_flags') else '',
-                    # Add score breakdown components
-                    'eps': breakdown.get('eps', 0),
-                    'daily percent change': breakdown.get('daily percent change', 0),
-                    'monthly percent change': breakdown.get('monthly percent change', 0),
-                    'bonus': breakdown.get('bonus', 0)
-                }
-            }
-            companies.append(company)
-            company_idx += 1
-    except Exception as e:
-        print(f"Error in get_companies: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': str(e), 'earnings_rows_count': len(earnings_rows)}), 500
-    
-    return jsonify(companies)
+
 
 @app.route('/companies/<company_id>', methods=['GET'])
 def get_company(company_id):
@@ -478,27 +427,33 @@ def get_leaderboard():
     """Get the leaderboard with all players and scores"""
     try:
         leaderboard = []
+
         for user_id, user in users.items():
-            # Calculate user's total game score
-            portfolio = user.portfolio.holdings
-            total_score = 0
-            
+            portfolio = user.portfolio.holdings  # ticker -> shares
+            total_score = 0.0
+
             for ticker, shares in portfolio.items():
-                if ticker in game_score:
-                    score_per_share = game_score[ticker]
-                    total_score += score_per_share * shares
-            
+                t = ticker.upper()  # normalize
+                shares = int(shares)
+
+                score_per_share = float(game_score.get(t, 0))  # default 0 if missing
+                total_score += score_per_share * shares
+
             user_data = user.get_user()
             leaderboard.append({
-                'player_id': user_id,
-                'player_name': user_data.get('username', 'Unknown'),
-                'score': total_score
+                "player_id": user_id,
+                "player_name": user_data.get("username", "Unknown"),
+                "score": round(total_score, 2),
             })
-        # Sort by score descending
-        leaderboard.sort(key=lambda x: x['score'], reverse=True)
+
+        leaderboard.sort(key=lambda x: x["score"], reverse=True)
         return jsonify(leaderboard)
+
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 
 # DRAFT/PORTFOLIO ENDPOINTS
 

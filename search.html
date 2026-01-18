@@ -153,9 +153,27 @@
 
         // Load companies from API
         async function loadCompanies() {
-            allCompanies = await getCompanies();
-            renderSearchResults(allCompanies);
+            try {
+                console.log("Loading companies...");
+                allCompanies = await getCompanies();
+                console.log("Companies response:", allCompanies);
+
+                if (!Array.isArray(allCompanies)) {
+                throw new Error("API did not return an array");
+                }
+
+                renderSearchResults(allCompanies);
+            } catch (err) {
+                console.error("Failed to load companies:", err);
+
+                const container = document.getElementById("companyList");
+                const noResults = document.getElementById("noResults");
+                noResults.style.display = "block";
+                noResults.textContent = "Failed to load companies (check console).";
+                container.innerHTML = "";
+            }
         }
+
 
         function renderSearchResults(companies) {
             const container = document.getElementById("companyList");
