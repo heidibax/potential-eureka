@@ -155,7 +155,7 @@
                     <div class="balance-divider"></div>
                     <div class="balance-item">
                         <p class="balance-label">Portfolio Value</p>
-                        <p class="balance-amount" id="portfolioValue">$0.00</p>
+                        <p class="balance-amount" id="portfolioValue">0</p>
                     </div>
                 </div>
             </div>
@@ -168,7 +168,7 @@
         </div>
 
         <div id="homepage">
-            <img src=https://static.vecteezy.com/system/resources/thumbnails/014/580/130/small/businessman-in-black-formal-suit-leaning-on-pile-of-gold-coins-with-growing-statistics-ornament-on-the-back-3d-rendering-of-business-investment-concept-png.png alt="Fantasy Earnings" class="homepage-img">
+            <img src=../img/mascot.png alt="Fantasy Earnings" class="homepage-img">
             
             <p class="homepageDescription">Draft companies like fantasy football and earn points based on their stock performance. Play with friends.</p>
         
@@ -199,103 +199,137 @@
     </div>
     <script src="app.js"></script>
     <script>
-        // Get or create default user and update balance display
-        async function initializeUserAndBalance() {
-            try {
-                // Check if user already exists in localStorage
-                let userId = localStorage.getItem('currentUserId');
-                
-                if (!userId) {
-                    // Only create a user if one doesn't exist
-                    const userResponse = await fetch("/api/users", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ username: "Fantasy Bro" })
-                    });
-                    const userData = await userResponse.json();
-                    userId = userData.user_id;
-                    
-                    // Store user ID for future use
-                    localStorage.setItem('currentUserId', userId);
-                }
-                
-                // Store user ID for later use
-                window.currentUserId = userId;
-                
-                // Now get portfolio data
-                await updateBalance(userId);
-            } catch (error) {
-                console.error("Error initializing user:", error);
-            }
+    // Always use the SAME key everywhere
+    const USER_KEY = "userId";
+
+    async function ensureUserId() {
+        let userId = localStorage.getItem(USER_KEY);
+        if (userId) {
+        // check if backend still knows this user (server restarts wipe memory)
+        const check = await fetch(`/api/users/${userId}`);
+        if (check.ok) return userId;
+
+        // stale id
+        localStorage.removeItem(USER_KEY);
+        userId = null;
         }
 
-        async function updateBalance(userId) {
-            try {
-                const response = await fetch(`/api/users/${userId}/portfolio`);
-                const data = await response.json();
-                
-                const holdings = data.holdings || {};
-                
-                // Fetch stock prices for all holdings to calculate total spent
-                const stocksResponse = await fetch(`/api/stocks`);
-                const allStocks = await stocksResponse.json();
-                
-                // Create a map of ticker to price
-                const priceMap = {};
-                allStocks.forEach(stock => {
-                    priceMap[stock.ticker] = stock.price;
-                });
-                
-                // Calculate total spent (sum of prices of all owned stocks)
-                let totalSpent = 0;
-                let portfolioValue = 0;
-                
-                for (const [ticker, holdingData] of Object.entries(holdings)) {
-                    const price = priceMap[ticker] || 0;
-                    const quantity = holdingData.quantity || 1;
-                    totalSpent += price * quantity;
-                    
-                    // Portfolio value = price * quantity (same as spent in this case)
-                    portfolioValue += price * quantity;
-                }
-                
-                // Remaining balance = 100 - total spent
-                const remainingBalance = 100 - totalSpent;
-                
-                // Update DOM
-                document.getElementById('remainingBalance').textContent = `$${remainingBalance.toFixed(2)}`;
-                document.getElementById('portfolioValue').textContent = `$${portfolioValue.toFixed(2)}`;
-            } catch (error) {
-                console.error("Error updating balance:", error);
-            }
+        // create user
+        const userResponse = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "Fantasy Bro" })
+        });
+
+        const userData = await userResponse.json();
+        userId = userData.user_id;
+        localStorage.setItem(USER_KEY, userId);
+        return userId;
+    }
+
+    async function updateBalance(userId) {
+        // 1) get holdings + balance from backend
+        const response = await fetch(`/api/users/${userId}/portfolio`);
+        const data = await response.json();
+
+        const holdings = data.holdings || {}; // { "AAPL": 2, ... }
+        const backendBalance = typeof data.balance === "number" ? data.balance : null;
+
+        // 2) get stock prices + scores
+        const stocksResponse = await fetch(`/api/stocks`);
+        const allStocks = await stocksResponse.json();
+
+        const priceMap = {};
+        const scoreMap = {};
+        allStocks.forEach(stock => {
+        priceMap[stock.ticker] = Number(stock.price) || 0;
+        scoreMap[stock.ticker] = Number(stock.score) || 0;
+        });
+
+        // 3) compute totals (holdings values are share counts, not objects)
+        let totalSpent = 0;
+        let portfolioValue = 0;
+
+        for (const [ticker, sharesRaw] of Object.entries(holdings)) {
+        const shares = Number(sharesRaw) || 0;
+        totalSpent += (priceMap[ticker] || 0) * shares;
+        portfolioValue += (scoreMap[ticker] || 0) * shares;
         }
 
-        // Load leaderboard on homepage
-        function loadLeaderboard() {
-            fetch("/api/leaderboard")
-                .then(response => response.json())
-                .then(data => {
-                    const leaderboardList = document.getElementById("leaderboardList");
-                    leaderboardList.innerHTML = "";
+        // Remaining balance:
+        // Prefer backend balance (truth), fallback to 100 - spent
+        const remainingBalance =
+        backendBalance !== null ? backendBalance : (100 - totalSpent);
 
-                    data.forEach((entry, index) => {
-                        const li = document.createElement("li");
-                        li.className = "leaderboard-item";
-                        li.innerHTML = `
-                            <span class="leaderboard-rank">#${index + 1}</span>
-                            <span>${entry.player_name}</span>
-                            <span><strong>${entry.score} pts</strong></span>
-                        `;
-                        leaderboardList.appendChild(li);
-                    });
-                })
-                .catch(error => console.error("Error loading leaderboard:", error));
-        }
+        // 4) update DOM
+        document.getElementById("remainingBalance").textContent =
+        `$${remainingBalance.toFixed(2)}`;
+        document.getElementById("portfolioValue").textContent =
+        `${portfolioValue.toFixed(2)}`;
+    }
 
-        // Initialize on page load
-        initializeUserAndBalance();
+    async function initializeUserAndBalance() {
+        try {
+        const userId = await ensureUserId();
+        window.currentUserId = userId;
+
+        await updateBalance(userId);
+
         loadLeaderboard();
-    </script>
+            
+        window.addEventListener("draft:updated", () => updateBalance(userId));
+
+        } catch (error) {
+            console.error("Error initializing user:", error);
+        }
+    }
+
+    // Call on load
+    // Load leaderboard on homepage
+function loadLeaderboard() {
+  fetch("/api/leaderboard")
+    .then(async (response) => {
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    })
+    .then((data) => {
+      const leaderboardList = document.getElementById("leaderboardList");
+      if (!leaderboardList) {
+        console.error('Missing element with id="leaderboardList"');
+        return;
+      }
+
+      leaderboardList.innerHTML = "";
+
+      // If nothing returned, show a friendly message
+      if (!Array.isArray(data) || data.length === 0) {
+        const li = document.createElement("li");
+        li.className = "leaderboard-item";
+        li.textContent = "No scores yet.";
+        leaderboardList.appendChild(li);
+        return;
+      }
+
+      data.forEach((entry, index) => {
+        const li = document.createElement("li");
+        li.className = "leaderboard-item";
+        li.innerHTML = `
+          <span class="leaderboard-rank">#${index + 1}</span>
+          <span>${entry.player_name ?? "Player"}</span>
+          <span><strong>${entry.score ?? 0} pts</strong></span>
+        `;
+        leaderboardList.appendChild(li);
+      });
+    })
+    .catch((error) => console.error("Error loading leaderboard:", error));
+}
+
+// Initialize on page load
+initializeUserAndBalance();
+loadLeaderboard();
+
+</script>
+
 
 </body> 
 </html>

@@ -142,7 +142,10 @@
                             <h3>${friend.name}</h3>
                             <p><strong>Score:</strong> ${friend.score || "N/A"}</p>
                             <p><strong>Companies:</strong> ${friend.companies_count || 0}</p>
-                            <button class="view-draft-btn">View Draft</button>
+                            <button class="view-draft-btn" onclick="window.location.href='my-draft.html'">
+                                View Draft
+                            </button>
+
                         `;
 
                         friendsList.appendChild(card);

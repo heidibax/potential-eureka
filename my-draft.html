@@ -124,66 +124,81 @@
     </div>
 
     <script>
+        function getUserId() {
+            // Must match company-detail.html where you set localStorage.setItem('userId', ...)
+            return localStorage.getItem("userId");
+            
+        }
+
         function loadDraft() {
             const draftList = document.getElementById("draftList");
             const emptyMessage = document.getElementById("emptyMessage");
 
-            // Get user_id from localStorage or create default user
-            let userId = localStorage.getItem('currentUserId');
-            const url = userId ? `/api/draft?user_id=${userId}` : '/api/draft';
+            const userId = getUserId();
+            const url = userId ? `/api/draft?user_id=${encodeURIComponent(userId)}` : "/api/draft";
 
-            // Fetch draft from backend
             fetch(url)
-                .then(response => response.json())
-                .then(draft => {
-                    draftList.innerHTML = "";
+            .then(async (response) => {
+                if (!response.ok) throw new Error(await response.text());
+                return response.json();
+            })
+            .then((draft) => {
+                draftList.innerHTML = "";
 
-                    if (draft.length === 0) {
-                        emptyMessage.style.display = "block";
-                        return;
-                    }
+                if (!Array.isArray(draft) || draft.length === 0) {
+                emptyMessage.style.display = "block";
+                return;
+                }
 
-                    emptyMessage.style.display = "none";
+                emptyMessage.style.display = "none";
 
-                    draft.forEach(company => {
-                        const item = document.createElement("div");
-                        item.className = "draft-item";
-                        item.innerHTML = `
-                            <div class="draft-item-info">
-                                <h3>${company.ticker}</h3>
-                                <p>ID: ${company.id}</p>
-                            </div>
-                            <button class="remove-btn" data-id="${company.id}">Remove</button>
-                        `;
+                draft.forEach((company) => {
+                const item = document.createElement("div");
+                item.className = "draft-item";
+                item.innerHTML = `
+                    <div class="draft-item-info">
+                    <h3>${company.ticker}</h3>
+                    <p>Shares: ${company.shares ?? 0}</p>
+                    <p>ID: ${company.id}</p>
+                    </div>
+                    <button class="remove-btn" data-id="${company.id}">Remove</button>
+                `;
 
-                        item.querySelector(".remove-btn").addEventListener("click", () => {
-                            removeFromDraft(company.id);
-                        });
-
-                        draftList.appendChild(item);
-                    });
-                })
-                .catch(error => {
-                    console.error("Error loading draft:", error);
-                    emptyMessage.style.display = "block";
-                    emptyMessage.textContent = "Error loading draft. Please try again.";
+                item.querySelector(".remove-btn").addEventListener("click", () => {
+                    removeFromDraft(company.id);
                 });
+
+                draftList.appendChild(item);
+                });
+            })
+            .catch((error) => {
+                console.error("Error loading draft:", error);
+                emptyMessage.style.display = "block";
+                emptyMessage.textContent = "Error loading draft. Please try again.";
+            });
         }
 
         function removeFromDraft(companyId) {
-            let userId = localStorage.getItem('currentUserId');
-            const url = userId ? `/api/draft/${companyId}?user_id=${userId}` : `/api/draft/${companyId}`;
-            
+            const userId = getUserId();
+            const url = userId
+            ? `/api/draft/${companyId}?user_id=${encodeURIComponent(userId)}`
+            : `/api/draft/${companyId}`;
+
             fetch(url, { method: "DELETE" })
-                .then(response => {
-                    if (response.ok) {
-                        loadDraft();
-                    }
-                })
-                .catch(error => console.error("Error removing from draft:", error));
+            .then(async (response) => {
+                if (!response.ok) {
+                const text = await response.text();
+                console.error("DELETE failed:", response.status, text);
+                alert("Remove failed. Check console for details.");
+                return;
+                }
+                loadDraft();
+            })
+            .catch((error) => console.error("Error removing from draft:", error));
         }
 
         loadDraft();
     </script>
+
 </body>
 </html>
