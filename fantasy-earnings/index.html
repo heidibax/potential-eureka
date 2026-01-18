@@ -15,10 +15,55 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            gap: 20px;
+        }
+
         .header h1 {
-            margin: 0 0 16px 0;
+            margin: 0;
             font-size: 2rem;
             font-weight: 800;
+            flex: 1;
+        }
+
+        .balance-box {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 12px 16px;
+            border-radius: 8px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            min-width: 280px;
+            flex-shrink: 0;
+        }
+
+        .balance-item {
+            text-align: right;
+            flex: 1;
+        }
+
+        .balance-label {
+            margin: 0;
+            font-size: 0.85rem;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .balance-amount {
+            margin: 4px 0 0 0;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #E6FFFA;
+        }
+
+        .balance-divider {
+            width: 1px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .nav-menu {
@@ -100,7 +145,20 @@
 <body> 
     <div class="container">
         <div class="header">
-            <h1>Fantasy Stock Market League</h1>
+            <div class="header-top">
+                <h1>Fantasy Stock Market League</h1>
+                <div class="balance-box">
+                    <div class="balance-item">
+                        <p class="balance-label">Remaining Balance</p>
+                        <p class="balance-amount" id="remainingBalance">$100.00</p>
+                    </div>
+                    <div class="balance-divider"></div>
+                    <div class="balance-item">
+                        <p class="balance-label">Portfolio Value</p>
+                        <p class="balance-amount" id="portfolioValue">$0.00</p>
+                    </div>
+                </div>
+            </div>
             <div class="nav-menu">
                 <a href="index.html" class="nav-btn active">Home</a>
                 <a href="../search.html" class="nav-btn">Companies</a>
@@ -141,6 +199,77 @@
     </div>
     <script src="app.js"></script>
     <script>
+        // Get or create default user and update balance display
+        async function initializeUserAndBalance() {
+            try {
+                // Check if user already exists in localStorage
+                let userId = localStorage.getItem('currentUserId');
+                
+                if (!userId) {
+                    // Only create a user if one doesn't exist
+                    const userResponse = await fetch("/api/users", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username: "Fantasy Bro" })
+                    });
+                    const userData = await userResponse.json();
+                    userId = userData.user_id;
+                    
+                    // Store user ID for future use
+                    localStorage.setItem('currentUserId', userId);
+                }
+                
+                // Store user ID for later use
+                window.currentUserId = userId;
+                
+                // Now get portfolio data
+                await updateBalance(userId);
+            } catch (error) {
+                console.error("Error initializing user:", error);
+            }
+        }
+
+        async function updateBalance(userId) {
+            try {
+                const response = await fetch(`/api/users/${userId}/portfolio`);
+                const data = await response.json();
+                
+                const holdings = data.holdings || {};
+                
+                // Fetch stock prices for all holdings to calculate total spent
+                const stocksResponse = await fetch(`/api/stocks`);
+                const allStocks = await stocksResponse.json();
+                
+                // Create a map of ticker to price
+                const priceMap = {};
+                allStocks.forEach(stock => {
+                    priceMap[stock.ticker] = stock.price;
+                });
+                
+                // Calculate total spent (sum of prices of all owned stocks)
+                let totalSpent = 0;
+                let portfolioValue = 0;
+                
+                for (const [ticker, holdingData] of Object.entries(holdings)) {
+                    const price = priceMap[ticker] || 0;
+                    const quantity = holdingData.quantity || 1;
+                    totalSpent += price * quantity;
+                    
+                    // Portfolio value = price * quantity (same as spent in this case)
+                    portfolioValue += price * quantity;
+                }
+                
+                // Remaining balance = 100 - total spent
+                const remainingBalance = 100 - totalSpent;
+                
+                // Update DOM
+                document.getElementById('remainingBalance').textContent = `$${remainingBalance.toFixed(2)}`;
+                document.getElementById('portfolioValue').textContent = `$${portfolioValue.toFixed(2)}`;
+            } catch (error) {
+                console.error("Error updating balance:", error);
+            }
+        }
+
         // Load leaderboard on homepage
         function loadLeaderboard() {
             fetch("/api/leaderboard")
@@ -163,6 +292,8 @@
                 .catch(error => console.error("Error loading leaderboard:", error));
         }
 
+        // Initialize on page load
+        initializeUserAndBalance();
         loadLeaderboard();
     </script>
 

@@ -30,7 +30,7 @@ users = {}
 user_counter = 0
 
 def get_or_create_default_user():
-    default_username = "default_user"
+    default_username = "Fantasy Bro"
     default_user = next((u for u in users.values() if u.username == default_username), None)
 
     if default_user:
@@ -157,8 +157,16 @@ def buy_stock(user_id):
     price_per_share = get_stock_price(ticker)
     total_cost = price_per_share * shares
     
-    if not user.can_afford(price_per_share, shares):
-        return jsonify({'error': 'Insufficient balance'}), 400
+    # Calculate total spent on stocks (sum of all stock prices in portfolio)
+    total_spent = 0
+    for ticker_held, stock_data in user.portfolio.holdings.items():
+        held_price = get_stock_price(ticker_held)
+        total_spent += held_price * stock_data.get('quantity', 1)
+    
+    # Check if buying this stock would exceed the $100 budget
+    remaining_balance = 100.0 - total_spent
+    if total_cost > remaining_balance:
+        return jsonify({'error': f'Insufficient balance. You have ${remaining_balance:.2f} remaining, but this stock costs ${total_cost:.2f}'}), 400
     
     user.portfolio.add_stock(ticker, shares)
     user.update_balance(-total_cost)
@@ -507,7 +515,7 @@ def get_draft():
         # If no user_id provided, create or get default user
         if not user_id:
             # Check if default user exists
-            default_username = 'default_user'
+            default_username = 'Fantasy Bro'
             default_user = next((u for u in users.values() if u.username == default_username), None)
             if not default_user:
                 # Create default user

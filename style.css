@@ -61,9 +61,44 @@ body {
 }
 
 .company-price {
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     font-weight: bold;
     color: #4caf50;
+    margin: 8px 0 4px 0;
+}
+
+.company-score {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: rgba(76, 175, 80, 0.9);
+    margin: 0 0 8px 0;
+}
+
+.score-btn {
+    background: rgba(76, 175, 80, 0.2);
+    color: #2F855A;
+    border: 1px solid rgba(76, 175, 80, 0.5);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+    margin-top: 8px;
+    width: 100%;
+}
+
+.score-btn:hover {
+    background: rgba(76, 175, 80, 0.3);
+}
+
+.score-details {
+    background: rgba(76, 175, 80, 0.1);
+    padding: 12px;
+    margin-top: 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #1F2937;
 }
 
 .draft-btn {
